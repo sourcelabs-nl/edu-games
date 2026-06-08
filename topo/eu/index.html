@@ -45,7 +45,7 @@
   .prompt{font-size:22px;font-weight:bold;text-align:center;margin:6px 0 12px;min-height:30px}
   .prompt .accent{color:var(--accent)}
   /* map */
-  .mapwrap{position:relative;width:100%;background:radial-gradient(circle at 40% 30%,#d8f0fb,#acd8ee);border-radius:16px;overflow:hidden;border:3px solid #8fbfd8}
+  .mapwrap{position:relative;width:100%;background:radial-gradient(circle at 40% 30%,#d8f0fb,#acd8ee);border-radius:16px;overflow:hidden;border:3px solid #8fbfd8;touch-action:none}
   svg{display:block;width:100%;height:auto}
   .bgland{fill:#dfe6ea;stroke:#c2ccd2;stroke-width:.8;stroke-linejoin:round;pointer-events:none}
   /* extruded 3D blocks: dark side walls behind the raised top faces */
@@ -293,7 +293,13 @@
   .mil-exit:hover{filter:brightness(1.25)}
   .mil-exit:active{transform:translateY(2px)}
   .mil-stage{display:grid;grid-template-columns:1fr 226px;gap:18px;align-items:start}
-  @media(max-width:680px){.mil-stage{grid-template-columns:1fr}.mil-ladder{order:-1;flex-direction:row;flex-wrap:wrap}}
+  @media(max-width:680px){
+    .mil-stage{grid-template-columns:1fr;gap:12px}
+    .mil-ladder{order:-1;flex-direction:row;gap:6px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+    .rung{flex:0 0 auto;flex-direction:column;gap:0;align-items:center;padding:5px 9px;min-width:62px;text-align:center}
+    .rung .rn{display:none}
+    .rung .rv{font-size:12px}
+  }
   .mil-q{background:linear-gradient(180deg,#123f90,#06163a);border:2px solid rgba(255,209,102,.5);
     clip-path:polygon(2% 0,98% 0,100% 50%,98% 100%,2% 100%,0 50%);
     padding:18px 32px;text-align:center;font-family:'Russo One',sans-serif;font-size:19px;margin-bottom:18px;
@@ -305,6 +311,19 @@
   .introamt{font-family:'Anton','Impact',sans-serif;font-style:italic;font-size:clamp(38px,8vw,54px);color:#ffd166;
     text-shadow:0 0 26px rgba(255,209,102,.85);animation:amtpop .65s cubic-bezier(.2,1.5,.4,1)}
   @keyframes amtpop{0%{transform:scale(.3) rotate(-6deg);opacity:0}60%{transform:scale(1.2) rotate(2deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+  /* uitlegscherm aan het begin */
+  .mil-q.intro2{flex-direction:column;gap:10px;padding:22px;min-height:auto}
+  .introbig{font-family:'Anton','Impact',sans-serif;font-style:italic;text-transform:uppercase;letter-spacing:1px;
+    font-size:clamp(24px,6vw,34px);color:#ffd166;text-shadow:0 0 22px rgba(255,209,102,.7)}
+  .introtxt{font-family:'Russo One',sans-serif;font-size:15px;line-height:1.65;color:#dfe9ff;font-weight:normal}
+  .introtxt b{color:#ffd166}
+  .introwarn{display:inline-block;margin:8px 0;padding:6px 14px;border-radius:10px;
+    background:rgba(231,76,60,.18);border:1px solid rgba(231,76,60,.6);color:#ff8b7d;font-weight:bold}
+  .mil-start{grid-column:1/-1;justify-self:center;margin-top:4px;padding:14px 36px;border-radius:30px/26px;
+    border:2px solid #ffd166;background:radial-gradient(circle at 50% 25%,#0a3a8a,#04122e);color:#ffe9a8;
+    font-family:'Russo One',sans-serif;font-weight:bold;font-size:18px;cursor:pointer;box-shadow:0 0 18px rgba(58,134,255,.6);transition:filter .1s,transform .08s}
+  .mil-start:hover{filter:brightness(1.25)}
+  .mil-start:active{transform:translateY(2px)}
   .mil-answers{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   @media(max-width:520px){.mil-answers{grid-template-columns:1fr}}
   .mil-plate{display:flex;align-items:center;gap:10px;padding:13px 26px;cursor:pointer;color:#fff;
@@ -344,6 +363,16 @@
   .aud-l{font-size:13px;color:#9fb6e0}
   .phone-box{background:rgba(14,58,140,.6);border:2px solid rgba(255,209,102,.4);border-radius:14px;padding:16px 20px;font-size:16px;line-height:1.5}
   .phone-box b{color:#ffd166}
+  @media(max-width:560px){
+    #game.card,#end.card,#mil.card{padding:16px}
+    .mil-q{padding:14px 18px;font-size:17px}
+    .mil-plate{padding:12px 16px;font-size:15px;gap:8px}
+    .ll{min-width:54px;height:44px;font-size:14px;padding:0 8px}
+    .mil-exit{height:44px;font-size:14px;padding:0 12px}
+    .mil-top{gap:8px}
+    .aud-bars{gap:12px;height:110px}
+    .aud-bar{width:32px}
+  }
 </style>
 </head>
 <body class="menu-active">
@@ -711,11 +740,11 @@ let G=null;
 function show(id){['menu','game','end','mil'].forEach(s=>$(s).classList.add('hidden'));$(id).classList.remove('hidden');
   document.body.classList.toggle('menu-active', id==='menu');
   document.body.classList.toggle('mil-active', id==='mil');}
-function toMenu(){ stopMilCue(); show('menu'); }
+function toMenu(){ show('menu'); }
 
 // ===== KAART MODE (single) =====
 function startKaart(diff){
-  buildMap();
+  buildMap(); resetMapZoom();
   G={mode:'kaart',diff,order:shuffle(CODES),idx:0,score:0,streak:0,lives:3,locked:false,quiz:false};
   $('choices').classList.add('hidden');
   $('mapwrap').classList.remove('hidden');
@@ -791,7 +820,7 @@ function answerCap(btn,val){
 
 // ===== GEMENGDE QUIZ (single player) =====
 function startMix(){
-  buildMap();
+  buildMap(); resetMapZoom();
   G={mode:'mix',quiz:true,order:shuffle(CODES),idx:0,score:0,streak:0,lives:3,locked:false};
   $('heartsPill').classList.remove('hidden');
   $('turnbar').classList.add('hidden');
@@ -940,45 +969,25 @@ function sLockin(){ beep(220,0.45,'sawtooth',0.16); }
 function sTick(){ beep(520,0.06,'sine',0.07); }
 function sFanfare(){ [523,659,784].forEach((f,i)=>setTimeout(()=>beep(f,0.16,'triangle',0.16),i*90)); }
 
-// ---- "Weekend Miljonairs"-achtig spanningsmuziekje (eigen synth, geen tv-thema) ----
-let milMusic=null;
-function milTone(freq,start,dur,type,vol){
-  const ctx=actx; const o=ctx.createOscillator(),g=ctx.createGain();
-  o.type=type; o.frequency.value=freq;
-  g.gain.setValueAtTime(0.0001,start);
-  g.gain.exponentialRampToValueAtTime(vol,start+0.03);
-  g.gain.exponentialRampToValueAtTime(0.0001,start+dur);
-  o.connect(g); g.connect(ctx.destination); o.start(start); o.stop(start+dur+0.05);
-}
-function startMilCue(){
-  stopMilCue();
-  try{
-    if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)();
-    if(actx.state==='suspended') actx.resume();
-  }catch(e){ return; }
-  // trage, spannende pulserende ostinato die onder de quiz blijft draaien
-  const pat=[110.00,110.00,146.83,123.47];   // A2 A2 D3 B2 — broeierig motief
-  let step=0;
-  const beat=0.62;
-  const tick=()=>{
-    const t=actx.currentTime+0.02, f=pat[step%pat.length];
-    milTone(f,    t,0.5,'sawtooth',0.045);   // baspuls
-    milTone(f/2,  t,0.5,'sine',    0.04);    // sub
-    if(step%2===0) milTone(f*3,t,0.34,'triangle',0.015); // lichte glinstering
-    step++;
-  };
-  tick();
-  milMusic=setInterval(tick, beat*1000);
-}
-function stopMilCue(){ if(milMusic){ clearInterval(milMusic); milMusic=null; } }
-
 function startMillionaire(){
   M={order:shuffle(CODES).slice(0,MIL_LADDER.length),idx:0,locked:false,
      used:{f:false,a:false,p:false},hidden:[]};
   buildLadder();
   ['ll5050','llAud','llPhone'].forEach(id=>{const b=$(id);b.classList.remove('used');b.disabled=false;});
-  show('mil'); startMilCue(); nextMil();
+  show('mil'); milIntro();
 }
+function milIntro(){
+  $('milAux').className='mil-aux'; $('milAux').innerHTML='';
+  $('milQ').className='mil-q intro2';
+  $('milQ').innerHTML=`<div class="introbig">💶 Hoofdsteden Miljonair</div>`+
+    `<div class="introtxt">Beantwoord alle <b>${MIL_LADDER.length}</b> vragen goed en verdien <b>€1.000.000</b>!<br>`+
+    `Bij elke goede hoofdstad klim je een trede op de geldladder.<br>`+
+    `<span class="introwarn">⚠️ Eén fout antwoord en het spel is afgelopen!</span><br>`+
+    `Je houdt wel het laatst bereikte <b>zekere bedrag</b>.<br>`+
+    `Vastzitten? Gebruik je 3 jokers: 50:50, publiek en telefoon.</div>`;
+  $('milAns').innerHTML=`<button class="mil-start" onclick="milBegin()">Start! ▶</button>`;
+}
+function milBegin(){ M.idx=0; nextMil(); }
 function buildLadder(){
   const ol=$('milLadder'); ol.innerHTML='';
   for(let i=MIL_LADDER.length-1;i>=0;i--){
@@ -991,7 +1000,11 @@ function buildLadder(){
 function highlightRung(){
   document.querySelectorAll('#milLadder .rung').forEach(r=>r.classList.remove('cur','done'));
   for(let i=0;i<M.idx;i++) $('rung-'+i)?.classList.add('done');
-  $('rung-'+M.idx)?.classList.add('cur');
+  const cur=$('rung-'+M.idx);
+  if(cur){
+    cur.classList.add('cur');
+    if(window.matchMedia('(max-width:680px)').matches) cur.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+  }
 }
 function nextMil(){
   M.hidden=[]; $('milAux').className='mil-aux'; $('milAux').innerHTML='';
@@ -1047,7 +1060,6 @@ function milGuaranteed(){ // bedrag dat je zeker hebt bij een fout
   let g=0; MIL_SAFE.forEach(si=>{ if(M.idx>si) g=MIL_LADDER[si]; }); return g;
 }
 function milEnd(won){
-  stopMilCue();
   const amount = won ? MIL_LADDER[MIL_LADDER.length-1] : milGuaranteed();
   show('end');
   $('rankEmoji').textContent = won?'👑':amount>=32500?'🤑':amount>0?'💶':'🫠';
@@ -1091,6 +1103,45 @@ function usePhone(){
   aux.innerHTML=`<div class="phone-box">📞 Je vriend zegt:<br>${text}</div>`;
   beep(700,0.08,'sine',0.12);
 }
+
+// ---------- kaart zoomen (alleen de kaart, niet de hele pagina) ----------
+let resetMapZoom=()=>{};
+(function mapZoom(){
+  const wrap=$('mapwrap'), svg=$('map'); if(!wrap||!svg) return;
+  const BASE={x:0,y:0,w:1000,h:760}, MINW=BASE.w*0.28;
+  let vb={...BASE};
+  const apply=()=>svg.setAttribute('viewBox',`${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+  function clamp(){
+    vb.w=Math.min(BASE.w,Math.max(MINW,vb.w)); vb.h=vb.w*BASE.h/BASE.w;
+    vb.x=Math.min(BASE.x+BASE.w-vb.w,Math.max(BASE.x,vb.x));
+    vb.y=Math.min(BASE.y+BASE.h-vb.h,Math.max(BASE.y,vb.y));
+  }
+  const rect=()=>svg.getBoundingClientRect();
+  function zoomAt(cx,cy,factor){
+    const r=rect(), px=vb.x+(cx-r.left)/r.width*vb.w, py=vb.y+(cy-r.top)/r.height*vb.h;
+    vb.w*=factor; clamp();
+    vb.x=px-(cx-r.left)/r.width*vb.w; vb.y=py-(cy-r.top)/r.height*vb.h; clamp(); apply();
+  }
+  wrap.addEventListener('wheel',e=>{ e.preventDefault(); zoomAt(e.clientX,e.clientY, e.deltaY>0?1.12:0.89); },{passive:false});
+  const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+  const mid=t=>({x:(t[0].clientX+t[1].clientX)/2,y:(t[0].clientY+t[1].clientY)/2});
+  let pinch=0, pan=null;
+  wrap.addEventListener('touchstart',e=>{
+    if(e.touches.length===2){ pinch=dist(e.touches); pan=null; }
+    else if(e.touches.length===1 && vb.w<BASE.w){ pan={x:e.touches[0].clientX,y:e.touches[0].clientY}; }
+  },{passive:false});
+  wrap.addEventListener('touchmove',e=>{
+    if(e.touches.length===2){ e.preventDefault(); const d=dist(e.touches),m=mid(e.touches); if(pinch) zoomAt(m.x,m.y,pinch/d); pinch=d; }
+    else if(e.touches.length===1 && pan && vb.w<BASE.w){
+      e.preventDefault(); const t=e.touches[0], r=rect();
+      vb.x-=(t.clientX-pan.x)/r.width*vb.w; vb.y-=(t.clientY-pan.y)/r.height*vb.h;
+      pan={x:t.clientX,y:t.clientY}; clamp(); apply();
+    }
+  },{passive:false});
+  wrap.addEventListener('touchend',e=>{ if(e.touches.length<2) pinch=0; if(!e.touches.length) pan=null; });
+  wrap.addEventListener('dblclick',e=>{ e.preventDefault(); vb={...BASE}; apply(); });
+  resetMapZoom=()=>{ vb={...BASE}; apply(); };
+})();
 
 // init
 buildMap();
