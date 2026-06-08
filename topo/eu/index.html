@@ -138,6 +138,14 @@
     text-transform:uppercase;background:var(--glow,#3a86ff);color:#08122b;padding:4px 10px;border-radius:6px;font-weight:bold;
     box-shadow:0 0 14px var(--glow,#3a86ff)}
   .t1{--glow:#3a86ff} .t2{--glow:#06d6a0} .t3{--glow:#8338ec} .t4{--glow:#ff5ea8}
+  /* locked tile */
+  .gtile.locked{filter:grayscale(.7) brightness(.7);cursor:not-allowed}
+  .gtile.locked:hover{transform:none;border-color:rgba(255,255,255,.18);box-shadow:none}
+  .gtile.locked .gicon{filter:none}
+  .gtile.locked::before{content:"🔒";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    font-size:46px;z-index:2;filter:drop-shadow(0 0 12px rgba(0,0,0,.6))}
+  .gtile.shake{animation:tileshake .4s}
+  @keyframes tileshake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
   .menu-foot{font-family:'Russo One',sans-serif;text-align:center;color:#9fb3d9;font-size:13px;margin-top:24px;letter-spacing:.5px}
   @media(max-width:560px){.title{font-size:clamp(40px,15vw,70px)}}
 
@@ -224,6 +232,25 @@
     background:var(--bc,#ffd166);box-shadow:0 0 10px var(--bc,#ffd166);animation:boomspk .62s ease-out forwards}
   @keyframes boomspk{from{transform:translate(0,0) scale(1);opacity:1}
     to{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0}}
+
+  /* ===================== DAMAGE / LIFE LOST ===================== */
+  /* red screen-edge flash like a shooter taking a hit */
+  #damage{position:fixed;inset:0;pointer-events:none;z-index:9990;opacity:0;
+    box-shadow:inset 0 0 140px 40px rgba(231,76,60,.85), inset 0 0 40px 10px rgba(255,0,0,.6)}
+  #damage.hit{animation:damageflash .65s ease-out}
+  @keyframes damageflash{0%{opacity:0}12%{opacity:1}100%{opacity:0}}
+  /* big "-1 ❤️" that punches in and floats up */
+  .lifelost{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);z-index:9995;pointer-events:none;
+    font-family:'Anton','Impact',sans-serif;font-style:italic;font-size:72px;color:#fff;
+    text-shadow:0 0 22px #e74c3c,0 0 8px #ff0000,0 4px 0 #7a1c14;animation:lifelost 1.1s cubic-bezier(.2,.8,.3,1) forwards}
+  @keyframes lifelost{0%{transform:translate(-50%,-50%) scale(.2) rotate(-12deg);opacity:0}
+    18%{transform:translate(-50%,-50%) scale(1.25) rotate(4deg);opacity:1}
+    35%{transform:translate(-50%,-50%) scale(1) rotate(0)}
+    100%{transform:translate(-50%,-130%) scale(.9);opacity:0}}
+  /* heart pill jolts when a life drops */
+  .hearts.lose{animation:heartjolt .6s ease-out}
+  @keyframes heartjolt{0%,100%{transform:scale(1)}25%{transform:scale(1.35);filter:drop-shadow(0 0 10px #e74c3c)}
+    50%{transform:scale(.85) rotate(-6deg)}75%{transform:scale(1.12) rotate(4deg)}}
 </style>
 </head>
 <body class="menu-active">
@@ -242,10 +269,10 @@
         <div class="gicon">🗺️</div>
         <div><div class="gname">Landen zoeken</div><div class="gdesc">Klik het juiste land op de kaart, met namen als hulp.</div></div>
       </div>
-      <div class="gtile t2" onclick="startKaart('pittig')">
-        <span class="gtag">Pittig</span>
-        <div class="gicon">🎯</div>
-        <div><div class="gname">Landen pittig</div><div class="gdesc">Geen namen op de kaart. Alleen voor de bazen.</div></div>
+      <div class="gtile t2" id="tilePittig" onclick="tryStartPittig()">
+        <span class="gtag" id="pittigTag">Pittig</span>
+        <div class="gicon" id="pittigIcon">🎯</div>
+        <div><div class="gname">Landen pittig</div><div class="gdesc" id="pittigDesc">Geen namen op de kaart. Alleen voor de bazen.</div></div>
       </div>
       <div class="gtile t3" onclick="startHoofdsteden()">
         <span class="gtag">Quiz</span>
@@ -303,6 +330,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<div id="damage" aria-hidden="true"></div>
 <canvas id="cf"></canvas>
 <div id="crosshair" aria-hidden="true">
   <span class="ring"></span>
@@ -373,6 +401,7 @@ function beep(freq,dur,type,vol){ try{
 function sGood(){ beep(660,0.1,'triangle',0.18); setTimeout(()=>beep(990,0.16,'triangle',0.18),90); }
 function sBad(){ beep(180,0.25,'sawtooth',0.16); }
 function sWin(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.2,'triangle',0.2),i*120)); }
+function sHurt(){ beep(300,0.18,'sawtooth',0.2); setTimeout(()=>beep(140,0.32,'sawtooth',0.22),70); }
 function sShoot(){ try{
   if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)();
   if(actx.state==='suspended') actx.resume();
@@ -395,6 +424,45 @@ function sShoot(){ try{
 const $=id=>document.getElementById(id);
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),900);}
+
+// big game-style feedback when a life is lost
+function loseLife(){
+  sHurt();
+  // red screen-edge flash
+  const d=$('damage'); d.classList.remove('hit'); void d.offsetWidth; d.classList.add('hit');
+  // floating "-1 ❤️"
+  const p=document.createElement('div'); p.className='lifelost'; p.textContent='-1 ❤️';
+  document.body.appendChild(p); setTimeout(()=>p.remove(),1150);
+  // jolt the hearts pill
+  const h=$('hearts'); h.classList.remove('lose'); void h.offsetWidth; h.classList.add('lose');
+}
+
+// ---------- "Landen pittig" unlock (persisted) ----------
+const PITTIG_KEY='eu_topo_pittig_unlocked';
+function isPittigUnlocked(){ try{ return localStorage.getItem(PITTIG_KEY)==='1'; }catch(e){ return false; } }
+function unlockPittig(){ try{ localStorage.setItem(PITTIG_KEY,'1'); }catch(e){} refreshLocks(); }
+function refreshLocks(){
+  const tile=$('tilePittig'); if(!tile) return;
+  if(isPittigUnlocked()){
+    tile.classList.remove('locked');
+    $('pittigTag').textContent='Pittig';
+    $('pittigIcon').textContent='🎯';
+    $('pittigDesc').textContent='Geen namen op de kaart. Alleen voor de bazen.';
+  }else{
+    tile.classList.add('locked');
+    $('pittigTag').textContent='Op slot';
+    $('pittigIcon').textContent='🎯';
+    $('pittigDesc').textContent='Speel eerst "Landen zoeken" helemaal uit om te ontgrendelen.';
+  }
+}
+function tryStartPittig(){
+  if(!isPittigUnlocked()){
+    const tile=$('tilePittig'); tile.classList.remove('shake'); void tile.offsetWidth; tile.classList.add('shake');
+    sBad(); toast('🔒 Speel eerst "Landen zoeken" uit!');
+    return;
+  }
+  startKaart('pittig');
+}
 
 // ---------- build map ----------
 let mapBuilt=false;
@@ -487,6 +555,7 @@ function onMapClick(c){
   }else{
     if(cEl)cEl.classList.add('bad'); tEl.classList.add('good'); sBad();
     G.streak=0; G.lives--; toast('Mis! Dit is '+NAME(G.target));
+    loseLife();
     boomAt(cEl,'#e74c3c',12); boomAt(tEl,'#2ecc71',14);
   }
   updateHud();
@@ -522,7 +591,7 @@ function answerCap(btn,val){
   const rightBtn=[...$('choices').children].find(b=>b.textContent===right);
   [...$('choices').children].forEach(b=>{ if(b.textContent===right)b.classList.add('good'); else if(b===btn)b.classList.add('bad'); b.disabled=true; });
   if(correct){ sGood(); G.streak++; const pts=10+Math.min(G.streak,5)*2; G.score+=pts; toast('Goed! +'+pts+(G.streak>1?' 🔥x'+G.streak:'')); boomAt(rightBtn,'#2ecc71',20); }
-  else{ sBad(); G.streak=0; G.lives--; toast('Mis! Het is '+right); boomAt(btn,'#e74c3c',12); boomAt(rightBtn,'#2ecc71',14); }
+  else{ sBad(); G.streak=0; G.lives--; toast('Mis! Het is '+right); loseLife(); boomAt(btn,'#e74c3c',12); boomAt(rightBtn,'#2ecc71',14); }
   updateHud();
   if(G.lives<=0) return setTimeout(endGame,1200);
   G.idx++; setTimeout(nextCap,1200);
@@ -558,7 +627,7 @@ function nextMix(){
 }
 function mixScore(correct){
   if(correct){ G.streak++; const pts=10+Math.min(G.streak,5)*2; G.score+=pts; toast('Goed! +'+pts+(G.streak>1?' 🔥x'+G.streak:'')); }
-  else { G.streak=0; G.lives--; }
+  else { G.streak=0; G.lives--; loseLife(); }
   updateHud();
   if(G.lives<=0) return setTimeout(endGame,1200);
   G.idx++; setTimeout(nextMix, correct?900:1250);
@@ -599,12 +668,19 @@ function rankFor(score,max){
 function endGame(){
   updateBar(1);
   const total=G.order.length, maxScore=total*20;
+  // "Landen zoeken" uitgespeeld (alle landen gehad, nog levens over) ontgrendelt "Landen pittig"
+  const finishedHulp = G.mode==='kaart' && G.diff==='hulp' && G.idx>=G.order.length && G.lives>0;
+  const justUnlocked = finishedHulp && !isPittigUnlocked();
+  if(finishedHulp) unlockPittig();
   const [emo,txt]=rankFor(G.score,maxScore);
   $('rankEmoji').textContent=emo;
   $('endText').textContent=txt;
   const label=G.mode==='cap'?'Hoofdsteden':G.mode==='mix'?'Gemengde quiz':'Landen';
-  $('endSub').textContent=`Score: ${G.score}  •  ${label}`;
+  $('endSub').textContent = justUnlocked
+    ? `Score: ${G.score}  •  🔓 "Landen pittig" ontgrendeld!`
+    : `Score: ${G.score}  •  ${label}`;
   sWin(); if(G.score>=maxScore*0.5) confetti(160);
+  if(justUnlocked){ confetti(160); toast('🔓 "Landen pittig" ontgrendeld!'); }
   const mode=G.mode, diff=G.diff;
   $('againBtn').onclick=()=> mode==='kaart'?startKaart(diff):mode==='mix'?startMix():startHoofdsteden();
   show('end');
@@ -663,6 +739,7 @@ function endGame(){
 
 // init
 buildMap();
+refreshLocks();
 </script>
 </body>
 </html>
