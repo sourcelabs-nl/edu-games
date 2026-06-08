@@ -268,6 +268,19 @@
     22%{transform:translate(-50%,-50%) scale(1) rotate(0)}
     75%{transform:translate(-50%,-55%) scale(1);opacity:1}
     100%{transform:translate(-50%,-120%) scale(.92);opacity:0}}
+  /* feestmelding bij het halen van een zekerheidsgrens */
+  .milcheer{position:fixed;left:50%;top:42%;z-index:9995;pointer-events:none;
+    display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:0 16px;
+    animation:milcheer 3s cubic-bezier(.2,.8,.3,1) forwards}
+  .milcheer .cheer-big{font-family:'Anton','Impact',sans-serif;font-style:italic;font-size:clamp(36px,9vw,64px);
+    color:#ffd166;text-shadow:0 0 28px rgba(255,209,102,.9),0 4px 0 #7a5500}
+  .milcheer .cheer-sub{font-family:'Russo One',sans-serif;font-size:clamp(15px,4vw,22px);color:#fff;
+    text-shadow:0 0 14px rgba(58,134,255,.7)}
+  @keyframes milcheer{0%{transform:translate(-50%,-50%) scale(.2);opacity:0}
+    12%{transform:translate(-50%,-50%) scale(1.18);opacity:1}
+    22%{transform:translate(-50%,-50%) scale(1)}
+    82%{transform:translate(-50%,-50%) scale(1);opacity:1}
+    100%{transform:translate(-50%,-58%) scale(.95);opacity:0}}
   /* heart pill jolts when a life drops */
   #hearts.lose{animation:heartjolt .6s ease-out}
   @keyframes heartjolt{0%,100%{transform:scale(1)}25%{transform:scale(1.35);filter:drop-shadow(0 0 10px #e74c3c)}
@@ -1101,12 +1114,23 @@ function milReveal(btn,val){
   const correct=val===M.right;
   [...$('milAns').children].forEach(b=>{ if(b.dataset.cap===M.right) b.classList.add('good'); });
   if(correct){
-    sGood(); confetti(60); M.idx++;
-    setTimeout(()=> M.idx>=M.order.length?milEnd(true):nextMil(), 1500);
+    sGood(); confetti(60);
+    const ai=M.idx; M.idx++;
+    const securedSafe = MIL_SAFE.includes(ai);   // net een zekerheidsgrens gehaald
+    if(securedSafe) setTimeout(()=>milCelebrate(MIL_LADDER[ai]), 700);
+    const delay = securedSafe ? 3000 : 1500;
+    setTimeout(()=> M.idx>=M.order.length?milEnd(true):nextMil(), delay);
   }else{
     btn.classList.add('bad'); sBad();
     setTimeout(()=>milEnd(false), 1800);
   }
+}
+function milCelebrate(amount){
+  sWin(); confetti(180);
+  const p=document.createElement('div'); p.className='milcheer';
+  p.innerHTML=`<span class="cheer-big">🎉 ${euro(amount)}</span>`+
+    `<span class="cheer-sub">Gefeliciteerd! Dit bedrag heb je bij elkaar gespeeld!</span>`;
+  document.body.appendChild(p); setTimeout(()=>p.remove(),3000);
 }
 function milGuaranteed(){ // bedrag dat je zeker hebt bij een fout
   let g=0; MIL_SAFE.forEach(si=>{ if(M.idx>si) g=MIL_LADDER[si]; }); return g;
