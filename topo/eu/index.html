@@ -41,7 +41,7 @@
   .hud{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
   .pill{background:#eef2f6;border-radius:999px;padding:8px 14px;font-weight:bold;font-size:15px;color:#33475b}
   .pill b{color:#102a43}
-  .hearts{font-size:20px;letter-spacing:2px}
+  #hearts{font-size:20px;letter-spacing:2px}
   .prompt{font-size:22px;font-weight:bold;text-align:center;margin:6px 0 12px;min-height:30px}
   .prompt .accent{color:var(--accent)}
   /* map */
@@ -269,7 +269,7 @@
     75%{transform:translate(-50%,-55%) scale(1);opacity:1}
     100%{transform:translate(-50%,-120%) scale(.92);opacity:0}}
   /* heart pill jolts when a life drops */
-  .hearts.lose{animation:heartjolt .6s ease-out}
+  #hearts.lose{animation:heartjolt .6s ease-out}
   @keyframes heartjolt{0%,100%{transform:scale(1)}25%{transform:scale(1.35);filter:drop-shadow(0 0 10px #e74c3c)}
     50%{transform:scale(.85) rotate(-6deg)}75%{transform:scale(1.12) rotate(4deg)}}
 
@@ -415,7 +415,7 @@
     <div class="hud">
       <span class="pill" id="hudLeft">Score: <b id="score">0</b></span>
       <span class="pill" id="hudStreak">🔥 Reeks: <b id="streak">0</b></span>
-      <span class="pill hearts hidden" id="heartsPill"><span id="hearts">❤️❤️❤️</span></span>
+      <span class="pill hearts hidden" id="heartsPill">Levens: <span id="hearts">❤️❤️❤️</span></span>
       <span class="pill" id="hudRight">Vraag <b id="qnum">1</b>/<b id="qtot">27</b></span>
     </div>
 
@@ -533,8 +533,8 @@ const CAPITAL = c => CAP[c][1];
 const SMALL = ["MT","CY","LU","MC","STR"]; // te klein: hebben een klikbare stip
 const P = window.EU_PATHS || {};
 // geometrie voor de toegevoegde plaatsen (kleine vormen + klikpunt)
-P.MC  = {name:"Monaco",      d:"M 463,567 L 466,564 L 469,567 L 466,570 Z", lx:466, ly:567};
-P.STR = {name:"Straatsburg", d:"M 443,452 L 446,449 L 449,452 L 446,455 Z", lx:446, ly:452};
+P.MC  = {name:"Monaco",      d:"M 443,554 L 446,551 L 449,554 L 446,557 Z", lx:446, ly:554};
+P.STR = {name:"Straatsburg", d:"M 436,456 L 439,453 L 442,456 L 439,459 Z", lx:439, ly:456};
 // alle locatie-doelen op de kaart: landen + bijzondere steden
 const LOCATE = CODES.concat(Object.keys(EXTRA_PLACES));
 
@@ -678,12 +678,12 @@ function buildMap(){
     html+=`<path class="country" id="ct-${c}" data-c="${c}" d="${o.d}"></path>`;
   }
   html+='</g>';
-  // labels group (toggle)
-  html+='<g id="labels">';
-  for(const c of LOCATE){ const o=P[c]; if(!o)continue; html+=`<text class="lbl" x="${o.lx}" y="${o.ly}">${NAME(c)}</text>`; }
-  html+='</g>';
-  // dots for tiny countries
+  // dots for tiny countries (eerst, zodat labels er overheen komen)
   for(const c of SMALL){ const o=P[c]; if(!o)continue; html+=`<circle class="dot" data-c="${c}" cx="${o.lx}" cy="${o.ly}" r="7"></circle>`; }
+  // labels group (toggle) — over de stippen heen; bij kleine plaatsen net boven de stip
+  html+='<g id="labels">';
+  for(const c of LOCATE){ const o=P[c]; if(!o)continue; const ly=SMALL.includes(c)?o.ly-(['LU','MC','STR'].includes(c)?5:8):o.ly; html+=`<text class="lbl" x="${o.lx}" y="${ly}">${NAME(c)}</text>`; }
+  html+='</g>';
   // overlay voor hover-kenmerken
   html+='<g id="chars"></g>';
   svg.innerHTML=html;
