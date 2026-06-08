@@ -293,12 +293,15 @@
   .mil-exit:hover{filter:brightness(1.25)}
   .mil-exit:active{transform:translateY(2px)}
   .mil-stage{display:grid;grid-template-columns:1fr 226px;gap:18px;align-items:start}
+  /* compacte statusregel i.p.v. de volledige ladder (alleen mobiel) */
+  .mil-status{display:none}
   @media(max-width:680px){
     .mil-stage{grid-template-columns:1fr;gap:12px}
-    .mil-ladder{order:-1;flex-direction:row;gap:6px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
-    .rung{flex:0 0 auto;flex-direction:column;gap:0;align-items:center;padding:5px 9px;min-width:62px;text-align:center}
-    .rung .rn{display:none}
-    .rung .rv{font-size:12px}
+    .mil-ladder{display:none}
+    .mil-status{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 16px;margin-bottom:12px;
+      font-family:'Russo One',sans-serif;font-size:13px;color:#cfe3ff}
+    .mil-status b{color:#ffd166}
+    .mil-status .safe{color:#7CFFB0}
   }
   .mil-q{background:linear-gradient(180deg,#123f90,#06163a);border:2px solid rgba(255,209,102,.5);
     clip-path:polygon(2% 0,98% 0,100% 50%,98% 100%,2% 100%,0 50%);
@@ -450,6 +453,7 @@
     </div>
     <div class="mil-stage">
       <div class="mil-main">
+        <div class="mil-status" id="milStatus"></div>
         <div class="mil-q" id="milQ"></div>
         <div class="mil-answers" id="milAns"></div>
         <div class="mil-aux" id="milAux"></div>
@@ -973,6 +977,31 @@ const MIL_LADDER=[100,200,300,500,1000, 2000,4000,8000,16000,32500, 65000,125000
 const MIL_SAFE=[4,9]; // indices die gegarandeerd zijn zodra je ze voorbij bent
 const euro=n=>'€'+n.toLocaleString('nl-NL');
 const LETTERS=['A','B','C','D'];
+// bekende NIET-hoofdsteden per land: lastige afleiders bij hogere bedragen
+const DECOY={
+  AT:["Graz","Linz","Salzburg","Innsbruck"], BE:["Antwerpen","Gent","Brugge","Luik"],
+  BG:["Plovdiv","Varna","Burgas"], HR:["Split","Rijeka","Dubrovnik","Zadar"],
+  CY:["Limassol","Larnaca","Paphos"], CZ:["Brno","Ostrava","Pilsen"],
+  DK:["Aarhus","Odense","Aalborg"], EE:["Tartu","Narva","Pärnu"],
+  FI:["Tampere","Turku","Espoo","Oulu"], FR:["Marseille","Lyon","Toulouse","Nice","Bordeaux"],
+  DE:["München","Hamburg","Keulen","Frankfurt","Stuttgart"], GR:["Thessaloniki","Patras","Heraklion"],
+  HU:["Debrecen","Szeged","Miskolc"], IE:["Cork","Galway","Limerick"],
+  IT:["Milaan","Napels","Turijn","Florence","Venetië"], LV:["Daugavpils","Liepaja","Jelgava"],
+  LT:["Kaunas","Klaipeda","Šiauliai"], LU:["Esch-sur-Alzette","Differdange","Dudelange"],
+  MT:["Birkirkara","Sliema","Mdina"], NL:["Rotterdam","Den Haag","Utrecht","Eindhoven","Haarlem"],
+  PL:["Krakau","Lodz","Wroclaw","Poznan","Gdansk"], PT:["Porto","Braga","Coimbra","Faro"],
+  RO:["Cluj-Napoca","Timisoara","Iasi","Brasov"], SK:["Košice","Prešov","Žilina"],
+  SI:["Maribor","Celje","Kranj"], ES:["Barcelona","Valencia","Sevilla","Bilbao","Málaga"],
+  SE:["Göteborg","Malmö","Uppsala"], MC:["Monte Carlo","La Condamine","Fontvieille"]
+};
+// bekendheid van het land (lager = bekender/makkelijker): bepaalt de plek op de geldladder
+const FAME={
+  NL:1,BE:1,DE:1,FR:1,ES:1,IT:1,
+  PT:2,GR:2,AT:2,IE:2,DK:2,SE:2,PL:2,
+  FI:3,CZ:3,HU:3,RO:3,HR:3,BG:3,
+  SK:4,SI:4,LT:4,LV:4,EE:4,CY:4,LU:4,
+  MT:5,MC:5
+};
 let M=null;
 
 function sLockin(){ beep(220,0.45,'sawtooth',0.16); }
@@ -980,14 +1009,16 @@ function sTick(){ beep(520,0.06,'sine',0.07); }
 function sFanfare(){ [523,659,784].forEach((f,i)=>setTimeout(()=>beep(f,0.16,'triangle',0.16),i*90)); }
 
 function startMillionaire(){
-  M={order:shuffle(CODES).slice(0,MIL_LADDER.length),idx:0,locked:false,
-     used:{f:false,a:false,p:false},hidden:[]};
+  // landen sorteren op bekendheid (+ wat variatie) zodat makkelijke landen onderaan de ladder staan
+  const order=CODES.map(c=>({c, k:(FAME[c]||3)+Math.random()*0.8}))
+    .sort((a,b)=>a.k-b.k).slice(0,MIL_LADDER.length).map(o=>o.c);
+  M={order,idx:0,locked:false,used:{f:false,a:false,p:false},hidden:[]};
   buildLadder();
   ['ll5050','llAud','llPhone'].forEach(id=>{const b=$(id);b.classList.remove('used');b.disabled=false;});
   show('mil'); milIntro();
 }
 function milIntro(){
-  $('milAux').className='mil-aux'; $('milAux').innerHTML='';
+  $('milAux').className='mil-aux'; $('milAux').innerHTML=''; $('milStatus').innerHTML='';
   $('milQ').className='mil-q intro2';
   $('milQ').innerHTML=`<div class="introbig">💶 Hoofdsteden Miljonair</div>`+
     `<div class="introtxt">Beantwoord alle <b>${MIL_LADDER.length}</b> vragen goed en verdien <b>€1.000.000</b>!<br>`+
@@ -1016,14 +1047,25 @@ function highlightRung(){
     if(window.matchMedia('(max-width:680px)').matches) cur.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
   }
 }
+// foute antwoorden: hoe hoger op de geldladder, hoe meer afleiders uit hetzelfde land
+function milDistractors(code){
+  const hard=M.idx/(MIL_LADDER.length-1);          // 0 (makkelijk) .. 1 (moeilijk)
+  const nSame=Math.round(hard*3);                  // 0..3 steden uit hetzelfde land
+  const same=shuffle((DECOY[code]||[]).filter(c=>c!==CAPITAL(code))).slice(0,nSame);
+  const need=3-same.length;
+  const foreign=shuffle(CODES.filter(c=>c!==code).map(CAPITAL).filter(cap=>!same.includes(cap))).slice(0,need);
+  return shuffle([...same,...foreign]);
+}
 function nextMil(){
   M.hidden=[]; $('milAux').className='mil-aux'; $('milAux').innerHTML='';
   if(M.idx>=M.order.length) return milEnd(true);
   M.target=M.order[M.idx];
   highlightRung();
+  const g=milGuaranteed();
+  $('milStatus').innerHTML=`Vraag <b>${M.idx+1}/${MIL_LADDER.length}</b> · nu voor <b>${euro(MIL_LADDER[M.idx])}</b>`+
+    (g>0?` · <span class="safe">zeker ${euro(g)}</span>`:'');
   M.right=CAPITAL(M.target);
-  const wrong=shuffle(CODES.filter(c=>c!==M.target)).slice(0,3).map(CAPITAL);
-  M.opts=shuffle([M.right,...wrong]);
+  M.opts=shuffle([M.right,...milDistractors(M.target)]);
   // flourish: "we spelen nu voor €X", daarna pas de vraag + antwoorden
   M.locked=true;
   $('milAns').innerHTML='';
