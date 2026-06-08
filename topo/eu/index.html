@@ -50,7 +50,8 @@
   .bgland{fill:#dfe6ea;stroke:#c2ccd2;stroke-width:.8;stroke-linejoin:round;pointer-events:none}
   /* extruded 3D blocks: dark side walls behind the raised top faces */
   .cside{fill:#bd9851;stroke:none;pointer-events:none}
-  #tops{filter:drop-shadow(0 5px 3px rgba(0,0,0,.45))}
+  /* drop-shadow op de hele landengroep weggehaald: herrasteriseerde bij elke hover.
+     De 3D-diepte komt al van de .cside-zijwanden. */
   .country{fill:var(--land);stroke:var(--landstroke);stroke-width:1;stroke-linejoin:round;cursor:pointer;transition:fill .12s}
   .country:hover{fill:#ffe9a8}
   .country.good{fill:var(--good)!important}
@@ -107,11 +108,9 @@
       radial-gradient(900px 700px at 75% 95%, rgba(255,0,153,.45), transparent 60%),
       radial-gradient(700px 600px at 10% 90%, rgba(6,214,160,.40), transparent 60%),
       linear-gradient(160deg,#150a33,#0a0420 70%);}
-  #arena::before{content:"";position:absolute;inset:-50%;background-image:
-      repeating-linear-gradient(115deg, rgba(255,255,255,.05) 0 2px, transparent 2px 60px);
-      animation:slide 18s linear infinite;}
-  @keyframes slide{from{transform:translateX(0)}to{transform:translateX(60px)}}
-  .spark{display:none;position:fixed;z-index:0;border-radius:50%;filter:blur(1px);opacity:.7;animation:floatUp linear infinite}
+  #arena::before{content:"";position:absolute;inset:0;background-image:
+      repeating-linear-gradient(115deg, rgba(255,255,255,.05) 0 2px, transparent 2px 60px);}
+  .spark{display:none;position:fixed;z-index:0;border-radius:50%;opacity:.7;animation:floatUp linear infinite}
   body.menu-active .spark{display:block}
   @keyframes floatUp{0%{transform:translateY(20px) scale(.6);opacity:0}10%{opacity:.8}100%{transform:translateY(-110vh) scale(1.1);opacity:0}}
 
@@ -133,10 +132,10 @@
 
   .menu-grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));max-width:980px;margin:0 auto}
   .gtile{position:relative;cursor:pointer;padding:22px 20px 20px;min-height:172px;color:#fff;
-    background:linear-gradient(160deg, rgba(255,255,255,.13), rgba(255,255,255,.03));
+    background:linear-gradient(160deg, rgba(40,28,86,.78), rgba(16,8,42,.78));
     border:2px solid rgba(255,255,255,.18);
     clip-path:polygon(0 0,100% 0,100% 86%,92% 100%,0 100%);
-    backdrop-filter:blur(6px);overflow:hidden;
+    overflow:hidden;
     transition:transform .12s ease, box-shadow .15s ease, border-color .15s;
     display:flex;flex-direction:column;justify-content:space-between}
   .gtile::after{content:"";position:absolute;inset:0;background:linear-gradient(160deg,transparent 55%,var(--glow,#3a86ff));opacity:.22;pointer-events:none}
@@ -167,7 +166,7 @@
     background:linear-gradient(160deg, rgba(36,18,82,.86), rgba(10,4,32,.92));
     border:2px solid rgba(131,56,236,.5);
     box-shadow:0 0 0 1px rgba(58,134,255,.25), 0 18px 50px rgba(0,0,0,.6), 0 0 60px rgba(131,56,236,.28);
-    backdrop-filter:blur(8px); color:#eaf1ff;
+    color:#eaf1ff;
     clip-path:polygon(0 0,100% 0,100% 97%,98% 100%,2% 100%,0 97%);
   }
   /* HUD pills */
@@ -184,7 +183,7 @@
   /* answer choices */
   #game .choice{background:linear-gradient(160deg,rgba(255,255,255,.13),rgba(255,255,255,.04));color:#fff;
     border:2px solid rgba(255,255,255,.2);font-family:'Russo One',sans-serif;box-shadow:0 4px 0 rgba(0,0,0,.35);
-    backdrop-filter:blur(4px);transition:transform .08s,border-color .12s,box-shadow .12s}
+    transition:transform .08s,border-color .12s,box-shadow .12s}
   #game .choice:hover{filter:none;border-color:#3a86ff;box-shadow:0 4px 0 rgba(0,0,0,.35),0 0 0 2px #3a86ff,0 0 22px rgba(58,134,255,.55)}
   #game .choice.good{background:linear-gradient(160deg,#2ecc71,#1f9d57);border-color:#5af09a;box-shadow:0 4px 0 #157a42,0 0 24px rgba(46,204,113,.7)}
   #game .choice.bad{background:linear-gradient(160deg,#e74c3c,#b03a2e);border-color:#ff8a7a;box-shadow:0 4px 0 #8c2c22,0 0 24px rgba(231,76,60,.7)}
@@ -937,7 +936,7 @@ function endGame(){
 // floating sparks behind the menu
 (function sparks(){
   const cols=['#3a86ff','#06d6a0','#8338ec','#ff5ea8','#ffd166'];
-  for(let i=0;i<26;i++){
+  for(let i=0;i<12;i++){
     const s=document.createElement('div'); s.className='spark';
     const sz=4+Math.random()*10;
     s.style.width=s.style.height=sz+'px';
