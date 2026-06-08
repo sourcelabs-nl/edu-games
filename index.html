@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sourcelabs Edu Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Russo+One&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;font-family:'Russo One','Segoe UI',system-ui,sans-serif}
+  body{margin:0;min-height:100vh;background:#0a0420;color:#eaf1ff;padding:26px 18px 60px;overflow-x:hidden}
+  /* animated arena background */
+  #arena{position:fixed;inset:0;z-index:0;background:
+      radial-gradient(900px 600px at 18% 12%, rgba(131,56,236,.55), transparent 60%),
+      radial-gradient(800px 600px at 85% 20%, rgba(58,134,255,.55), transparent 60%),
+      radial-gradient(900px 700px at 75% 95%, rgba(255,0,153,.45), transparent 60%),
+      radial-gradient(700px 600px at 10% 90%, rgba(6,214,160,.40), transparent 60%),
+      linear-gradient(160deg,#150a33,#0a0420 70%)}
+  #arena::before{content:"";position:absolute;inset:-50%;
+      background-image:repeating-linear-gradient(115deg, rgba(255,255,255,.05) 0 2px, transparent 2px 60px);
+      animation:slide 18s linear infinite}
+  @keyframes slide{from{transform:translateX(0)}to{transform:translateX(60px)}}
+  .wrap{position:relative;z-index:1;max-width:1040px;margin:0 auto}
+  .hero{text-align:center;margin:10px 0 30px}
+  .kicker{letter-spacing:6px;color:#ffd166;text-transform:uppercase;font-size:14px;text-shadow:0 0 14px rgba(255,209,102,.7)}
+  .title{font-family:'Anton','Impact',sans-serif;font-style:italic;text-transform:uppercase;line-height:.92;
+    font-size:clamp(44px,10vw,92px);letter-spacing:1px;margin:6px 0 0;
+    background:linear-gradient(180deg,#fff 0%,#8ad7ff 45%,#3a86ff 70%,#8338ec 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 4px 0 #1b0a4d) drop-shadow(0 0 26px rgba(58,134,255,.65));transform:skewX(-6deg)}
+  .tagline{color:#cfe3ff;font-size:16px;margin-top:12px;letter-spacing:1px}
+  .cat{margin:34px 0 6px;display:flex;align-items:center;gap:12px}
+  .cat h2{font-family:'Anton','Impact',sans-serif;font-style:italic;text-transform:uppercase;font-size:24px;letter-spacing:1px;margin:0;color:#fff}
+  .cat .bar{flex:1;height:2px;background:linear-gradient(90deg,rgba(58,134,255,.7),transparent)}
+  .grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+  a.game{position:relative;text-decoration:none;color:#fff;padding:22px 20px 20px;min-height:150px;
+    background:linear-gradient(160deg, rgba(255,255,255,.13), rgba(255,255,255,.03));
+    border:2px solid rgba(255,255,255,.18);clip-path:polygon(0 0,100% 0,100% 86%,92% 100%,0 100%);
+    backdrop-filter:blur(6px);overflow:hidden;transition:transform .12s,box-shadow .15s,border-color .15s;
+    display:flex;flex-direction:column;justify-content:space-between}
+  a.game::after{content:"";position:absolute;inset:0;background:linear-gradient(160deg,transparent 55%,var(--glow,#3a86ff));opacity:.22;pointer-events:none}
+  a.game:hover{transform:translateY(-6px) scale(1.02);border-color:var(--glow,#3a86ff);
+    box-shadow:0 0 0 2px var(--glow,#3a86ff),0 14px 38px rgba(0,0,0,.55),0 0 40px var(--glow,#3a86ff)}
+  .game .ico{font-size:40px;filter:drop-shadow(0 0 12px var(--glow,#3a86ff))}
+  .game .nm{font-family:'Anton','Impact',sans-serif;font-style:italic;text-transform:uppercase;font-size:23px;letter-spacing:1px;margin:10px 0 4px}
+  .game .ds{font-size:13px;line-height:1.4;color:#e7eeff;opacity:.92}
+  .game .tag{position:absolute;top:12px;right:12px;font-size:11px;letter-spacing:1px;text-transform:uppercase;
+    background:var(--glow,#3a86ff);color:#08122b;padding:4px 10px;border-radius:6px;box-shadow:0 0 14px var(--glow,#3a86ff)}
+  .soon{opacity:.5;pointer-events:none;border-style:dashed}
+  .foot{text-align:center;color:#9fb3d9;font-size:13px;margin-top:40px;letter-spacing:.5px}
+  @media(max-width:560px){.title{font-size:clamp(38px,14vw,64px)}}
+</style>
+</head>
+<body>
+<div id="arena"></div>
+<div class="wrap">
+  <div class="hero">
+    <div class="kicker">Sourcelabs</div>
+    <h1 class="title">EDU GAMES</h1>
+    <div class="tagline">Leren door te spelen 🎮</div>
+  </div>
+  <div id="catalog"></div>
+  <div class="foot">Gemaakt door Sourcelabs · meer games volgen</div>
+</div>
+
+<script>
+/* =====================================================================
+   GAME-CATALOGUS — hier voeg je later nieuwe games toe.
+   Per game: een map met index.html + een regel hieronder.
+   Velden: title, desc, icon (emoji), url (map), tag, glow (kleur), soon (true = binnenkort).
+   ===================================================================== */
+const CATALOG = [
+  {
+    category: "Topografie",
+    games: [
+      { title:"Europese Unie", desc:"Landen en hoofdsteden van de EU. Klikkaart + quiz, met shooter-modus.",
+        icon:"🌍", url:"topo/eu/", tag:"Nieuw", glow:"#3a86ff" }
+      // Voorbeeld voor later:
+      // { title:"Wereld", desc:"Alle landen van de wereld.", icon:"🗺️", url:"topo/wereld/", tag:"Binnenkort", glow:"#06d6a0", soon:true }
+    ]
+  }
+  // Voorbeeld nieuwe categorie:
+  // { category:"Rekenen", games:[ { title:"Tafels", desc:"Oefen de tafels.", icon:"➗", url:"rekenen/tafels/", glow:"#ff5ea8", soon:true } ] }
+];
+
+const GLOWS=["#3a86ff","#06d6a0","#8338ec","#ff5ea8","#ffd166"];
+const cat=document.getElementById('catalog');
+CATALOG.forEach(group=>{
+  const h=document.createElement('div'); h.className='cat';
+  h.innerHTML=`<h2>${group.category}</h2><span class="bar"></span>`;
+  cat.appendChild(h);
+  const grid=document.createElement('div'); grid.className='grid';
+  group.games.forEach((g,i)=>{
+    const glow=g.glow||GLOWS[i%GLOWS.length];
+    const a=document.createElement('a');
+    a.className='game'+(g.soon?' soon':'');
+    a.href=g.soon?'#':g.url;
+    a.style.setProperty('--glow',glow);
+    a.innerHTML=`${g.tag?`<span class="tag">${g.tag}</span>`:''}
+      <div class="ico">${g.icon||'🎮'}</div>
+      <div><div class="nm">${g.title}</div><div class="ds">${g.desc||''}</div></div>`;
+    grid.appendChild(a);
+  });
+  cat.appendChild(grid);
+});
+</script>
+</body>
+</html>
