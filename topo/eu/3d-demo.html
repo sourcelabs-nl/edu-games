@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EU Topo · 3D mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Russo+One&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;font-family:'Russo One','Segoe UI',system-ui,sans-serif}
+  body{margin:0;min-height:100vh;color:#eaf1ff;padding:26px 18px 60px;
+    background:radial-gradient(900px 600px at 18% 12%,rgba(131,56,236,.5),transparent 60%),
+      radial-gradient(800px 600px at 85% 20%,rgba(58,134,255,.5),transparent 60%),
+      linear-gradient(160deg,#150a33,#0a0420 70%)}
+  h1{font-family:'Anton','Impact',sans-serif;font-style:italic;text-transform:uppercase;text-align:center;
+    font-size:clamp(30px,6vw,54px);margin:0 0 6px;
+    background:linear-gradient(180deg,#fff,#8ad7ff 60%,#3a86ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{text-align:center;color:#cfe3ff;margin:0 0 28px}
+  .grid{display:grid;gap:24px;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));max-width:1200px;margin:0 auto}
+  .panel{background:linear-gradient(160deg,rgba(36,18,82,.86),rgba(10,4,32,.92));
+    border:2px solid rgba(131,56,236,.5);border-radius:18px;padding:18px 18px 22px;
+    box-shadow:0 18px 50px rgba(0,0,0,.6)}
+  .panel h2{font-family:'Anton','Impact',sans-serif;font-style:italic;text-transform:uppercase;margin:0 0 2px;font-size:22px;color:#ffd166}
+  .panel p{margin:2px 0 14px;font-size:13px;color:#b9c8ec;line-height:1.4;min-height:54px}
+  .stage{position:relative;width:100%;aspect-ratio:1000/760;overflow:visible}
+  .stage svg{display:block;width:100%;height:auto;overflow:visible}
+
+  /* shared map look */
+  .bgland{fill:#2b2350;stroke:#3a2f63;stroke-width:.8;pointer-events:none}
+  .top{stroke:#caa86a;stroke-width:1;stroke-linejoin:round}
+  .lbl{font-size:11px;fill:#fff;font-weight:bold;text-anchor:middle;paint-order:stroke;stroke:#3a2a10;stroke-width:2.5px}
+
+  /* ===== Variant A: tilt + shadow ===== */
+  .vA .tilt{transform:perspective(1100px) rotateX(34deg) rotateZ(-3deg);transform-origin:center 60%}
+  .vA .top{fill:#f6e7c4;filter:drop-shadow(0 10px 8px rgba(0,0,0,.55))}
+
+  /* ===== Variant B: faux extrude (blocks) ===== */
+  .vB .tilt{transform:perspective(1300px) rotateX(40deg);transform-origin:center 60%}
+  .vB .side{fill:#9c7b3e}
+  .vB .top{fill:#f6e7c4}
+
+  /* ===== Variant C: combo + landmarks ===== */
+  .vC .tilt{transform:perspective(1300px) rotateX(38deg) rotateZ(-2deg);transform-origin:center 60%}
+  .vC .side{fill:#8a5cc4}
+  .vC .top{fill:#efe2ff;filter:drop-shadow(0 6px 5px rgba(0,0,0,.4))}
+  .vC .top.glow{fill:#fff}
+  .landmark{font-size:26px;filter:drop-shadow(0 4px 3px rgba(0,0,0,.6))}
+
+  .note{max-width:1200px;margin:30px auto 0;text-align:center;color:#9fb3d9;font-size:13px;line-height:1.6}
+  .badge{display:inline-block;background:#06d6a0;color:#08122b;padding:3px 10px;border-radius:6px;font-size:11px;margin-left:8px}
+  .loading{text-align:center;color:#cfe3ff;padding:40px}
+</style>
+</head>
+<body>
+  <h1>EU Topo · 3D mockup</h1>
+  <p class="sub">Drie richtingen voor een cooler, 3D-achtiger kaart. Kies je favoriet, dan bouw ik die in de echte game.</p>
+
+  <div id="grid" class="grid">
+    <div class="loading">Kaartdata laden…</div>
+  </div>
+
+  <div class="note">
+    Alle drie de varianten draaien op exact dezelfde kaartdata als de game.
+    <span class="badge">A &amp; B &amp; C: licht, geen libraries</span><br>
+    A = simpel kantelen + slagschaduw · B = echte blok-extrusie · C = combo met herkenbare 3D-landmarks per land (🗼🏛️🏰…).
+  </div>
+
+<script>
+const LANDMARK = { FR:'🗼', GR:'🏛️', DE:'🏰', IT:'🏛️', NL:'🌷', ES:'🏰', BE:'🍟', AT:'🎻', PT:'⛵', SE:'🛶' };
+
+function buildSVG(P, BG, variant){
+  const NS='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(NS,'svg');
+  svg.setAttribute('viewBox','0 0 1000 760');
+  // background landmasses
+  (BG||[]).forEach(d=>{ const p=document.createElementNS(NS,'path'); p.setAttribute('d',d); p.setAttribute('class','bgland'); svg.appendChild(p); });
+
+  const codes=Object.keys(P);
+  const DEPTH=14; // extrusion depth in px (downward)
+
+  codes.forEach(c=>{
+    const o=P[c];
+    if(variant==='B' || variant==='C'){
+      // stacked offset copies = fake extruded walls
+      const g=document.createElementNS(NS,'g');
+      for(let k=DEPTH;k>=1;k--){
+        const s=document.createElementNS(NS,'path');
+        s.setAttribute('d',o.d); s.setAttribute('class','side');
+        s.setAttribute('transform',`translate(0,${k})`);
+        g.appendChild(s);
+      }
+      svg.appendChild(g);
+    }
+    const top=document.createElementNS(NS,'path');
+    top.setAttribute('d',o.d);
+    top.setAttribute('class','top'+(variant==='C' && LANDMARK[c]?' glow':''));
+    svg.appendChild(top);
+  });
+
+  // labels + landmarks
+  codes.forEach(c=>{
+    const o=P[c];
+    if(variant==='C' && LANDMARK[c]){
+      const t=document.createElementNS(NS,'text');
+      t.setAttribute('x',o.lx); t.setAttribute('y',o.ly-6);
+      t.setAttribute('class','landmark'); t.setAttribute('text-anchor','middle');
+      t.textContent=LANDMARK[c];
+      svg.appendChild(t);
+    } else {
+      const t=document.createElementNS(NS,'text');
+      t.setAttribute('x',o.lx); t.setAttribute('y',o.ly);
+      t.setAttribute('class','lbl'); t.textContent=c;
+      svg.appendChild(t);
+    }
+  });
+  return svg;
+}
+
+function panel(title,desc,cls,svg){
+  const d=document.createElement('div'); d.className='panel '+cls;
+  d.innerHTML=`<h2>${title}</h2><p>${desc}</p>`;
+  const stage=document.createElement('div'); stage.className='stage';
+  const tilt=document.createElement('div'); tilt.className='tilt';
+  tilt.appendChild(svg); stage.appendChild(tilt); d.appendChild(stage);
+  return d;
+}
+
+(async function(){
+  let P={}, BG=[];
+  try{
+    const txt=await (await fetch('index.html')).text();
+    const mEU=txt.match(/window\.EU_PATHS\s*=\s*({[\s\S]*?});/);
+    const mBG=txt.match(/window\.BG_PATHS\s*=\s*(\[[\s\S]*?\]);/);
+    if(mEU) P=JSON.parse(mEU[1]);
+    if(mBG) BG=JSON.parse(mBG[1]);
+  }catch(e){ console.error(e); }
+
+  const grid=document.getElementById('grid');
+  grid.innerHTML='';
+  grid.appendChild(panel('Variant A · Tilt &amp; schaduw',
+    'De huidige kaart, gekanteld in perspectief met een zachte slagschaduw. Subtiel, snel en heel licht. Niets verandert aan de vorm van de landen.',
+    'vA', buildSVG(P,BG,'A')));
+  grid.appendChild(panel('Variant B · Blok-extrusie',
+    'Elk land krijgt echte dikte: gestapelde randen maken er 3D-blokken van, alsof Europa uit het water omhoog komt. Pure SVG, geen libraries.',
+    'vB', buildSVG(P,BG,'B')));
+  grid.appendChild(panel('Variant C · Combo + landmarks',
+    'Blok-extrusie + kanteling + een herkenbaar mini-landmark per land (Eiffeltoren, Parthenon, kasteel, tulp…). De meest "game"-achtige look.',
+    'vC', buildSVG(P,BG,'C')));
+})();
+</script>
+</body>
+</html>
