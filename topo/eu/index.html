@@ -47,6 +47,9 @@
   /* map */
   .mapwrap{position:relative;width:100%;background:radial-gradient(circle at 40% 30%,#d8f0fb,#acd8ee);border-radius:16px;overflow:hidden;border:3px solid #8fbfd8;touch-action:none}
   svg{display:block;width:100%;height:auto}
+  /* kaart nooit hoger dan het scherm: cap op de viewporthoogte minus de
+     omringende UI (hud, prompt, footer); minimaal 220px op korte schermen */
+  #map{max-height:max(220px, calc(100vh - 250px))}
   .bgland{fill:#dfe6ea;stroke:#c2ccd2;stroke-width:.8;stroke-linejoin:round;pointer-events:none}
   /* extruded 3D blocks: dark side walls behind the raised top faces */
   .cside{fill:#bd9851;stroke:none;pointer-events:none}
@@ -207,7 +210,8 @@
   body.mil-active.has-mouse, body.mil-active.has-mouse *{cursor:auto !important}
   body.mil-active #crosshair{display:none !important}
   #crosshair{display:none;position:fixed;left:0;top:0;width:48px;height:48px;margin:-24px 0 0 -24px;
-    z-index:9999;pointer-events:none;transform:scale(1);transition:transform .05s ease-out}
+    z-index:9999;pointer-events:none;will-change:transform;
+    transform:translate3d(var(--cx,0),var(--cy,0),0)}
   body.has-mouse #crosshair{display:block}
   #crosshair .ring{position:absolute;inset:7px;border:2px solid #ffd166;border-radius:50%;
     box-shadow:0 0 12px #ffd166, inset 0 0 8px rgba(255,209,102,.6);opacity:.95}
@@ -219,8 +223,11 @@
     background:#fff;box-shadow:0 0 8px #fff}
   #crosshair.fire{animation:recoil .24s ease-out}
   #crosshair.fire .ring{border-color:#ff8c00;box-shadow:0 0 24px #ff8c00, inset 0 0 14px #ff8c00}
-  @keyframes recoil{0%{transform:scale(1) rotate(0)}25%{transform:scale(.68) rotate(-8deg)}
-    55%{transform:scale(1.16) rotate(4deg)}100%{transform:scale(1) rotate(0)}}
+  @keyframes recoil{
+    0%{transform:translate3d(var(--cx,0),var(--cy,0),0) scale(1) rotate(0)}
+    25%{transform:translate3d(var(--cx,0),var(--cy,0),0) scale(.68) rotate(-8deg)}
+    55%{transform:translate3d(var(--cx,0),var(--cy,0),0) scale(1.16) rotate(4deg)}
+    100%{transform:translate3d(var(--cx,0),var(--cy,0),0) scale(1) rotate(0)}}
   /* muzzle flash */
   .flash{position:fixed;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;pointer-events:none;z-index:9998;
     background:radial-gradient(circle,#fff 0%,#ffd166 35%,rgba(255,140,0,0) 70%);animation:flashpop .34s ease-out forwards}
@@ -976,7 +983,7 @@ function endGame(){
   }
   addEventListener('mousemove',e=>{
     document.body.classList.add('has-mouse');
-    ch.style.left=e.clientX+'px'; ch.style.top=e.clientY+'px';
+    ch.style.setProperty('--cx',e.clientX+'px'); ch.style.setProperty('--cy',e.clientY+'px');
   },{passive:true});
   addEventListener('mousedown',e=>{ if(e.button===0 && !document.body.classList.contains('mil-active')) fire(e.clientX,e.clientY); });
   ch.addEventListener('animationend',()=>ch.classList.remove('fire'));
