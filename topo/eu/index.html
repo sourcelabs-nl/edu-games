@@ -522,13 +522,21 @@ const CAP = {
   LV:["Letland","Riga"], LT:["Litouwen","Vilnius"], LU:["Luxemburg","Luxemburg"],
   MT:["Malta","Valletta"], NL:["Nederland","Amsterdam"], PL:["Polen","Warschau"],
   PT:["Portugal","Lissabon"], RO:["Roemenië","Boekarest"], SK:["Slowakije","Bratislava"],
-  SI:["Slovenië","Ljubljana"], ES:["Spanje","Madrid"], SE:["Zweden","Stockholm"]
+  SI:["Slovenië","Ljubljana"], ES:["Spanje","Madrid"], SE:["Zweden","Stockholm"],
+  MC:["Monaco","Monaco"]
 };
 const CODES = Object.keys(CAP);
-const NAME = c => CAP[c][0];
+// bijzondere EU-steden zonder eigen 'land' (alleen op de kaart te zoeken)
+const EXTRA_PLACES = { STR:"Straatsburg" };
+const NAME = c => CAP[c] ? CAP[c][0] : (EXTRA_PLACES[c] || c);
 const CAPITAL = c => CAP[c][1];
-const SMALL = ["MT","CY","LU"]; // need a clickable dot
+const SMALL = ["MT","CY","LU","MC","STR"]; // te klein: hebben een klikbare stip
 const P = window.EU_PATHS || {};
+// geometrie voor de toegevoegde plaatsen (kleine vormen + klikpunt)
+P.MC  = {name:"Monaco",      d:"M 463,567 L 466,564 L 469,567 L 466,570 Z", lx:466, ly:567};
+P.STR = {name:"Straatsburg", d:"M 443,452 L 446,449 L 449,452 L 446,455 Z", lx:446, ly:452};
+// alle locatie-doelen op de kaart: landen + bijzondere steden
+const LOCATE = CODES.concat(Object.keys(EXTRA_PLACES));
 
 // ---------- Sound (Web Audio) ----------
 let actx=null;
@@ -645,8 +653,10 @@ const FLAGS={
   SK:_h3('#fff','#0B4EA2','#EE1C25'),
   SI:_h3('#fff','#0000A0','#ED1C24'),
   ES:_r(0,0,FW,FH*0.25,'#AA151B')+_r(0,FH*0.25,FW,FH*0.5,'#F1BF00')+_r(0,FH*0.75,FW,FH*0.25,'#AA151B'),
-  SE:_nordic('#006AA7','#FECC00')
+  SE:_nordic('#006AA7','#FECC00'),
+  MC:_h2('#CE1126','#fff')   // Monaco: rood boven, wit onder
 };
+FLAGS.STR=FLAGS.FR;          // Straatsburg ligt in Frankrijk → Franse vlag
 const EXTRUDE=10; // diepte (in kaart-eenheden) van de 3D-blokken
 let mapBuilt=false;
 function buildMap(){
@@ -661,16 +671,16 @@ function buildMap(){
     for(const c of CODES){ const o=P[c]; if(!o)continue; html+=`<path class="cside" d="${o.d}" transform="translate(0,${k})"></path>`; }
   }
   html+='</g>';
-  // top faces (clickable)
+  // top faces (clickable) — landen + bijzondere steden
   html+='<g id="tops">';
-  for(const c of CODES){
+  for(const c of LOCATE){
     const o=P[c]; if(!o) continue;
     html+=`<path class="country" id="ct-${c}" data-c="${c}" d="${o.d}"></path>`;
   }
   html+='</g>';
   // labels group (toggle)
   html+='<g id="labels">';
-  for(const c of CODES){ const o=P[c]; if(!o)continue; html+=`<text class="lbl" x="${o.lx}" y="${o.ly}">${NAME(c)}</text>`; }
+  for(const c of LOCATE){ const o=P[c]; if(!o)continue; html+=`<text class="lbl" x="${o.lx}" y="${o.ly}">${NAME(c)}</text>`; }
   html+='</g>';
   // dots for tiny countries
   for(const c of SMALL){ const o=P[c]; if(!o)continue; html+=`<circle class="dot" data-c="${c}" cx="${o.lx}" cy="${o.ly}" r="7"></circle>`; }
@@ -745,12 +755,12 @@ function toMenu(){ show('menu'); }
 // ===== KAART MODE (single) =====
 function startKaart(diff){
   buildMap(); resetMapZoom();
-  G={mode:'kaart',diff,order:shuffle(CODES),idx:0,score:0,streak:0,lives:3,locked:false,quiz:false};
+  G={mode:'kaart',diff,order:shuffle(LOCATE),idx:0,score:0,streak:0,lives:3,locked:false,quiz:false};
   $('choices').classList.add('hidden');
   $('mapwrap').classList.remove('hidden');
   $('heartsPill').classList.remove('hidden');
   $('turnbar').classList.add('hidden');
-  $('qtot').textContent=CODES.length;
+  $('qtot').textContent=LOCATE.length;
   showLabels(diff==='hulp');
   show('game'); nextKaart();
 }
