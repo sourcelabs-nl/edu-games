@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Duits · Kapitel 9 + 10</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Russo+One&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --hi:#ffd166; --good:#2ecc71; --bad:#e74c3c;
+    --panel:#ffffff; --ink:#1b2a36; --accent:#3a86ff; --accent2:#8338ec;
+  }
+  *{box-sizing:border-box;font-family:'Trebuchet MS','Segoe UI',system-ui,sans-serif}
+  body{margin:0;min-height:100vh;background:#0a0420;color:var(--ink);display:flex;align-items:flex-start;justify-content:center;padding:18px;overflow-x:hidden}
+  /* animated arena background */
+  #arena{position:fixed;inset:0;z-index:0;background:
+      radial-gradient(900px 600px at 18% 12%, rgba(131,56,236,.55), transparent 60%),
+      radial-gradient(800px 600px at 85% 20%, rgba(58,134,255,.55), transparent 60%),
+      radial-gradient(900px 700px at 75% 95%, rgba(255,0,153,.45), transparent 60%),
+      radial-gradient(700px 600px at 10% 90%, rgba(6,214,160,.40), transparent 60%),
+      linear-gradient(160deg,#150a33,#0a0420 70%)}
+  #arena::before{content:"";position:absolute;inset:-50%;
+      background-image:repeating-linear-gradient(115deg, rgba(255,255,255,.05) 0 2px, transparent 2px 60px);
+      animation:slide 18s linear infinite}
+  @keyframes slide{from{transform:translateX(0)}to{transform:translateX(60px)}}
+
+  #app{position:relative;z-index:1;width:100%;max-width:760px}
+  .card{background:var(--panel);border-radius:20px;box-shadow:0 12px 40px rgba(0,0,0,.35);padding:22px}
+  .hidden{display:none!important}
+
+  /* hero / menu */
+  .hero{text-align:center;margin:4px 0 22px}
+  .kicker{letter-spacing:5px;color:#ffd166;text-transform:uppercase;font-size:13px;text-shadow:0 0 14px rgba(255,209,102,.7)}
+  .title{font-family:'Anton','Impact',sans-serif;font-style:italic;text-transform:uppercase;line-height:.92;
+    font-size:clamp(40px,9vw,72px);letter-spacing:1px;margin:6px 0 0;
+    background:linear-gradient(180deg,#fff 0%,#ffe08a 45%,#ffd166 70%,#e74c3c 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 4px 0 #1b0a4d) drop-shadow(0 0 26px rgba(255,209,102,.55));transform:skewX(-6deg)}
+  .tagline{color:#cfe3ff;font-size:15px;margin-top:10px;letter-spacing:1px}
+
+  h1{margin:0 0 4px;font-size:26px;color:#102a43;letter-spacing:.4px}
+  .sub{color:#5b6b7a;margin:0 0 16px;font-size:14px}
+
+  .btn{cursor:pointer;border:none;border-radius:14px;padding:13px 18px;font-size:16px;font-weight:bold;color:#fff;background:var(--accent);transition:transform .08s,filter .12s;box-shadow:0 4px 0 rgba(0,0,0,.15)}
+  .btn:hover{filter:brightness(1.07)}
+  .btn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.15)}
+  .btn.alt{background:var(--accent2)}
+  .btn.ghost{background:#eef2f6;color:#33475b;box-shadow:0 4px 0 #d4dde6}
+  .btn.big{font-size:19px;padding:16px 22px}
+
+  /* mode tiles */
+  .modes{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+  .mode{border-radius:18px;padding:20px;color:#fff;cursor:pointer;transition:transform .1s;min-height:130px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 6px 0 rgba(0,0,0,.18)}
+  .mode:hover{transform:translateY(-3px)}
+  .mode h3{margin:0;font-size:20px}
+  .mode p{margin:8px 0 0;font-size:13px;opacity:.95;line-height:1.35}
+  .m1{background:linear-gradient(135deg,#3a86ff,#4361ee)}
+  .m2{background:linear-gradient(135deg,#06d6a0,#118ab2)}
+  .m3{background:linear-gradient(135deg,#8338ec,#c1121f)}
+
+  /* filters */
+  .filters{margin:18px 0 4px;display:flex;flex-direction:column;gap:12px}
+  .frow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .flabel{font-weight:bold;color:#33475b;font-size:14px;width:90px;flex:none}
+  .chip{cursor:pointer;border:2px solid #d4dde6;background:#f3f6fa;color:#33475b;border-radius:999px;padding:8px 14px;font-size:14px;font-weight:bold;transition:.12s}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .count{color:#5b6b7a;font-size:13px;margin-top:6px}
+
+  /* HUD */
+  .hud{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .pill{background:#eef2f6;border-radius:999px;padding:8px 14px;font-weight:bold;font-size:14px;color:#33475b}
+  .pill b{color:#102a43}
+  .progress{height:12px;background:#e6ecf2;border-radius:999px;overflow:hidden;flex:1;min-width:140px}
+  .progress > div{height:100%;background:linear-gradient(90deg,#3a86ff,#06d6a0);width:0%;transition:width .3s}
+
+  .tagline-k{display:inline-block;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:#8a97a6;margin-bottom:8px}
+  .ex{color:#5b6b7a;font-size:15px;font-style:italic;margin-top:10px;line-height:1.4}
+
+  /* flashcard */
+  .flash{perspective:1200px;margin:6px 0 16px}
+  .flashinner{position:relative;width:100%;min-height:210px;text-align:center;transition:transform .5s;transform-style:preserve-3d;cursor:pointer}
+  .flash.flipped .flashinner{transform:rotateY(180deg)}
+  .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:18px;padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 6px 0 rgba(0,0,0,.12)}
+  .front{background:#eef4ff;border:2px solid #cdddff}
+  .back{background:#eafaf2;border:2px solid #b8ecd2;transform:rotateY(180deg)}
+  .word{font-size:30px;font-weight:bold;color:#102a43;line-height:1.25}
+  .hintflip{margin-top:14px;color:#8a97a6;font-size:13px}
+
+  /* quiz */
+  .prompt{font-size:24px;font-weight:bold;text-align:center;margin:14px 0 6px;color:#102a43;line-height:1.3}
+  .choices{display:grid;grid-template-columns:1fr;gap:12px;margin-top:14px}
+  .choice{background:#eef2f6;color:#1b2a36;border:none;border-radius:14px;padding:15px;font-size:17px;font-weight:bold;cursor:pointer;box-shadow:0 4px 0 #d4dde6;transition:transform .08s;text-align:center}
+  .choice:hover{filter:brightness(.98)}
+  .choice:active{transform:translateY(2px)}
+  .choice.good{background:var(--good);color:#fff;box-shadow:0 4px 0 #1f9d57}
+  .choice.bad{background:var(--bad);color:#fff;box-shadow:0 4px 0 #b03a2e}
+  .choice:disabled{cursor:default}
+
+  /* type */
+  .typein{width:100%;padding:15px;border-radius:14px;border:2px solid #d4dde6;font-size:20px;text-align:center;margin-top:14px}
+  .typein:focus{outline:none;border-color:var(--accent)}
+  .feedback{text-align:center;font-weight:bold;font-size:17px;margin-top:12px;min-height:24px}
+  .feedback.good{color:var(--good)}
+  .feedback.bad{color:var(--bad)}
+  .feedback small{display:block;color:#5b6b7a;font-weight:normal;margin-top:4px}
+
+  .footrow{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:10px;flex-wrap:wrap}
+
+  /* end screen */
+  .rank{font-size:44px;font-weight:bold;text-align:center;margin:6px 0}
+  .center{text-align:center}
+  .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+
+  /* voorlezen */
+  .spk{cursor:pointer;border:none;background:transparent;font-size:.7em;line-height:1;padding:2px 5px;border-radius:8px;vertical-align:middle;opacity:.7;transition:transform .1s,opacity .12s}
+  .spk:hover{opacity:1;transform:scale(1.15)}
+  .spk:active{transform:scale(.95)}
+
+  /* intro */
+  .howto{margin:6px 0 14px;padding-left:22px;color:#33475b}
+  .howto li{margin:7px 0;font-size:15px;line-height:1.45}
+  .introset{background:#eef4ff;border:2px solid #cdddff;border-radius:14px;padding:12px 16px;color:#33475b;font-size:14px;font-weight:bold}
+
+  .toplinks{text-align:center;margin-top:16px}
+  .toplinks a{color:#9fb3d9;font-size:13px;text-decoration:none}
+  .toplinks a:hover{color:#cfe3ff}
+
+  @media(max-width:560px){.word{font-size:25px}.prompt{font-size:21px}}
+</style>
+</head>
+<body>
+<div id="arena"></div>
+<div id="app">
+
+  <!-- ============ MENU ============ -->
+  <div id="menu" class="card">
+    <div class="hero">
+      <div class="kicker">Sourcelabs · Duits</div>
+      <h1 class="title">Kapitel 9+10</h1>
+      <div class="tagline">Woorden &amp; zinnen oefenen 🇩🇪</div>
+    </div>
+
+    <h1>Kies een oefenmodus</h1>
+    <p class="sub">Eerst je filters kiezen, dan een modus.</p>
+
+    <div class="modes">
+      <div class="mode m1" data-mode="leren">
+        <h3>📖 Leren</h3>
+        <p>Flashcards om de woorden en zinnen rustig te lezen en in te prenten. Tik om om te draaien.</p>
+      </div>
+      <div class="mode m2" data-mode="quiz">
+        <h3>🎯 Quiz</h3>
+        <p>Meerkeuze: kies de juiste vertaling. Lekker snel oefenen met score.</p>
+      </div>
+      <div class="mode m3" data-mode="typen">
+        <h3>⌨️ Typen</h3>
+        <p>Tik de vertaling in (met het juiste lidwoord). Goed voor de spelling op de toets.</p>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="frow">
+        <span class="flabel">Kapitel</span>
+        <button class="chip on" data-k="9">Kapitel 9</button>
+        <button class="chip on" data-k="10">Kapitel 10</button>
+      </div>
+      <div class="frow">
+        <span class="flabel">Onderdeel</span>
+        <button class="chip on" data-type="woord">Woorden</button>
+        <button class="chip on" data-type="zin">Zinnen</button>
+        <button class="chip on" data-type="lees">Leeswoorden</button>
+      </div>
+      <div class="frow">
+        <span class="flabel">Richting</span>
+        <button class="chip on" data-dir="nl2de">Nederlands → Duits</button>
+        <button class="chip" data-dir="de2nl">Duits → Nederlands</button>
+      </div>
+    </div>
+    <div class="count" id="count"></div>
+
+    <div class="toplinks"><a href="../../">← Terug naar alle games</a></div>
+  </div>
+
+  <!-- ============ INTRO ============ -->
+  <div id="intro" class="card hidden">
+    <div class="tagline-k" id="introMode"></div>
+    <h1 id="introTitle"></h1>
+    <p class="sub" id="introWhat"></p>
+    <ul class="howto" id="introSteps"></ul>
+    <p class="introset" id="introSet"></p>
+    <div class="footrow">
+      <button class="btn ghost" id="btnBack">← Terug</button>
+      <button class="btn big" id="btnGo">Doorgaan →</button>
+    </div>
+  </div>
+
+  <!-- ============ PLAY ============ -->
+  <div id="play" class="card hidden">
+    <div class="hud">
+      <span class="pill" id="pillMode">📖 Leren</span>
+      <div class="progress"><div id="bar"></div></div>
+      <span class="pill" id="pillScore"></span>
+    </div>
+    <div class="tagline-k" id="ktag"></div>
+    <div id="stage"></div>
+    <div class="footrow">
+      <button class="btn ghost" id="btnQuit">⏹ Stoppen</button>
+      <button class="btn" id="btnNext">Volgende →</button>
+    </div>
+  </div>
+
+  <!-- ============ END ============ -->
+  <div id="end" class="card hidden center">
+    <h1>Klaar! 🎉</h1>
+    <div class="rank" id="rank"></div>
+    <p class="sub" id="endmsg"></p>
+    <div class="row">
+      <button class="btn big" id="btnAgain">Nog een keer</button>
+      <button class="btn big alt" id="btnMenu">Terug naar menu</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* =====================================================================
+   DATA — overgenomen uit het lesmateriaal (Noordhoff, Kapitel 9 + 10).
+   k    = hoofdstuk (9 of 10)
+   type = 'woord' | 'zin' | 'lees'
+   nl   = Nederlands, de = Duits
+   ex   = (optioneel) Duitse voorbeeldzin om te lezen
+   ===================================================================== */
+const DATA = [
+
+  /* ---------- KAPITEL 9 · WOORDEN (winkelen, eten) ---------- */
+  {k:9,type:'woord',nl:'de boekenwinkel',de:'der Buchladen'},
+  {k:9,type:'woord',nl:'de cent',de:'der Cent'},
+  {k:9,type:'woord',nl:'de euro',de:'der Euro'},
+  {k:9,type:'woord',nl:'de ham',de:'der Schinken'},
+  {k:9,type:'woord',nl:'de kaas',de:'der Käse'},
+  {k:9,type:'woord',nl:'de prijs',de:'der Preis'},
+  {k:9,type:'woord',nl:'de supermarkt',de:'der Supermarkt'},
+  {k:9,type:'woord',nl:'de taart',de:'der Kuchen'},
+  {k:9,type:'woord',nl:'de bakkerij',de:'die Bäckerei'},
+  {k:9,type:'woord',nl:'de banketbakkerij',de:'die Konditorei'},
+  {k:9,type:'woord',nl:'het blikje',de:'die Dose'},
+  {k:9,type:'woord',nl:'het bolletje (ijs)',de:'die Kugel'},
+  {k:9,type:'woord',nl:'de boter',de:'die Butter'},
+  {k:9,type:'woord',nl:'de chocola',de:'die Schokolade'},
+  {k:9,type:'woord',nl:'de ijssalon',de:'die Eisdiele'},
+  {k:9,type:'woord',nl:'de melk',de:'die Milch'},
+  {k:9,type:'woord',nl:'de slagerij',de:'die Metzgerei'},
+  {k:9,type:'woord',nl:'de slagroom',de:'die Sahne'},
+  {k:9,type:'woord',nl:'de tas',de:'die Tasche'},
+  {k:9,type:'woord',nl:'het tasje, zakje',de:'die Tüte'},
+  {k:9,type:'woord',nl:'de worst',de:'die Wurst'},
+  {k:9,type:'woord',nl:'het broodje',de:'das Brötchen'},
+  {k:9,type:'woord',nl:'het gehakt',de:'das Hackfleisch'},
+  {k:9,type:'woord',nl:'het geld',de:'das Geld'},
+  {k:9,type:'woord',nl:'de kilo',de:'das Kilo'},
+  {k:9,type:'woord',nl:'de portemonnee',de:'das Portmonee'},
+  {k:9,type:'woord',nl:'het stuk',de:'das Stück'},
+  {k:9,type:'woord',nl:'de winkel',de:'das Geschäft'},
+  {k:9,type:'woord',nl:'de winkel (zaak)',de:'der Laden'},
+  {k:9,type:'woord',nl:'betalen',de:'zahlen, bezahlen'},
+  {k:9,type:'woord',nl:'boodschappen doen',de:'einkaufen'},
+  {k:9,type:'woord',nl:'helpen',de:'helfen'},
+  {k:9,type:'woord',nl:'kopen',de:'kaufen'},
+  {k:9,type:'woord',nl:'kosten',de:'kosten'},
+  {k:9,type:'woord',nl:'nodig hebben',de:'brauchen'},
+  {k:9,type:'woord',nl:'pinnen',de:'mit Karte zahlen'},
+  {k:9,type:'woord',nl:'zoeken',de:'suchen'},
+  {k:9,type:'woord',nl:'anders, verder',de:'sonst'},
+  {k:9,type:'woord',nl:'contant',de:'bar'},
+  {k:9,type:'woord',nl:'duur',de:'teuer'},
+  {k:9,type:'woord',nl:'goedkoop',de:'billig'},
+  {k:9,type:'woord',nl:'goedkoop, voordelig',de:'günstig'},
+  {k:9,type:'woord',nl:'hoeveel',de:'wie viel'},
+  {k:9,type:'woord',nl:'samen, bij elkaar',de:'zusammen'},
+  {k:9,type:'woord',nl:'Tot ziens!',de:'Auf Wiedersehen!'},
+  /* Wiederholung (eten en drinken) */
+  {k:9,type:'woord',nl:'de koffie',de:'der Kaffee'},
+  {k:9,type:'woord',nl:'de peper',de:'der Pfeffer'},
+  {k:9,type:'woord',nl:'de rijst',de:'der Reis'},
+  {k:9,type:'woord',nl:'de sinaasappelsap',de:'der Orangensaft'},
+  {k:9,type:'woord',nl:'de suiker',de:'der Zucker'},
+  {k:9,type:'woord',nl:'de thee',de:'der Tee'},
+  {k:9,type:'woord',nl:'de cola',de:'die Cola'},
+  {k:9,type:'woord',nl:'de saus, de jus',de:'die Soße'},
+  {k:9,type:'woord',nl:'de soep',de:'die Suppe'},
+  {k:9,type:'woord',nl:'het brood',de:'das Brot'},
+  {k:9,type:'woord',nl:'het fruit',de:'das Obst'},
+  {k:9,type:'woord',nl:'de groente',de:'das Gemüse'},
+  {k:9,type:'woord',nl:'het ijs',de:'das Eis'},
+  {k:9,type:'woord',nl:'het zout',de:'das Salz'},
+  {k:9,type:'woord',nl:'de aardappelen',de:'die Kartoffeln'},
+  {k:9,type:'woord',nl:'de pasta',de:'die Nudeln'},
+  {k:9,type:'woord',nl:'de patat, friet',de:'die Pommes'},
+
+  /* ---------- KAPITEL 10 · WOORDEN (vakantie, reizen) ---------- */
+  {k:10,type:'woord',nl:'de camping',de:'der Campingplatz'},
+  {k:10,type:'woord',nl:'de caravan',de:'der Wohnwagen'},
+  {k:10,type:'woord',nl:'het strand',de:'der Strand'},
+  {k:10,type:'woord',nl:'de trein',de:'die Bahn'},
+  {k:10,type:'woord',nl:'het vakantieappartement',de:'die Ferienwohnung'},
+  {k:10,type:'woord',nl:'de auto',de:'das Auto'},
+  {k:10,type:'woord',nl:'het hotel',de:'das Hotel'},
+  {k:10,type:'woord',nl:'het kamp',de:'das Camp'},
+  {k:10,type:'woord',nl:'het museum',de:'das Museum'},
+  {k:10,type:'woord',nl:'de tent',de:'das Zelt'},
+  {k:10,type:'woord',nl:'het vakantiehuis',de:'das Ferienhaus'},
+  {k:10,type:'woord',nl:'de zee',de:'das Meer'},
+  {k:10,type:'woord',nl:'het zwembad',de:'das Schwimmbad'},
+  {k:10,type:'woord',nl:'de vakantie',de:'die Ferien'},
+  {k:10,type:'woord',nl:'de zomervakantie',de:'die Sommerferien'},
+  {k:10,type:'woord',nl:'Denemarken',de:'Dänemark'},
+  {k:10,type:'woord',nl:'Frankrijk',de:'Frankreich'},
+  {k:10,type:'woord',nl:'Italië',de:'Italien'},
+  {k:10,type:'woord',nl:'Spanje',de:'Spanien'},
+  {k:10,type:'woord',nl:'afspreken',de:'sich treffen'},
+  {k:10,type:'woord',nl:'gaan, rijden',de:'fahren'},
+  {k:10,type:'woord',nl:'kamperen',de:'zelten'},
+  {k:10,type:'woord',nl:'op vakantie gaan',de:'in den Urlaub fahren'},
+  {k:10,type:'woord',nl:'overnachten',de:'übernachten'},
+  {k:10,type:'woord',nl:'daarna',de:'danach'},
+  {k:10,type:'woord',nl:'eerst',de:'zuerst'},
+  {k:10,type:'woord',nl:'Goede reis!',de:'Gute Reise!'},
+  {k:10,type:'woord',nl:'iedere dag',de:'jeden Tag'},
+  {k:10,type:'woord',nl:'later',de:'später'},
+  {k:10,type:'woord',nl:'naar',de:'nach'},
+  {k:10,type:'woord',nl:'Veel plezier!',de:'Viel Spaß!'},
+  /* Wiederholung (modale werkwoorden e.a.) */
+  {k:10,type:'woord',nl:'kunnen',de:'können'},
+  {k:10,type:'woord',nl:'moeten (noodzaak)',de:'müssen'},
+  {k:10,type:'woord',nl:'moeten (van een ander)',de:'sollen'},
+  {k:10,type:'woord',nl:'leuk vinden, lusten',de:'mögen'},
+  {k:10,type:'woord',nl:'mogen',de:'dürfen'},
+  {k:10,type:'woord',nl:'weten',de:'wissen'},
+  {k:10,type:'woord',nl:'willen',de:'wollen'},
+  {k:10,type:'woord',nl:'willen (wens)',de:'möchten'},
+
+  /* ---------- KAPITEL 9 · ZINNEN ---------- */
+  {k:9,type:'zin',nl:'Kan ik u helpen?',de:'Kann ich Ihnen helfen?'},
+  {k:9,type:'zin',nl:'Ik wil graag twee bolletjes ijs.',de:'Ich möchte zwei Kugeln Eis.'},
+  {k:9,type:'zin',nl:'Waar vind ik de bakkerij?',de:'Wo finde ich die Bäckerei?'},
+  {k:9,type:'zin',nl:'Hoe veel kost dat?',de:'Wie viel kostet das?'},
+  {k:9,type:'zin',nl:'Dat is in totaal twintig euro en dertien cent.',de:'Das macht zusammen zwanzig Euro und dreizehn Cent.'},
+  {k:9,type:'zin',nl:'Kan ik pinnen/contant betalen?',de:'Kann ich mit Karte/bar bezahlen?'},
+
+  /* ---------- KAPITEL 10 · ZINNEN ---------- */
+  {k:10,type:'zin',nl:'Wat doe je in de vakantie?',de:'Was machst du in den Ferien?'},
+  {k:10,type:'zin',nl:'Wij gaan drie weken naar Frankrijk.',de:'Wir fahren für drei Wochen nach Frankreich.'},
+  {k:10,type:'zin',nl:'Ik spreek af met vrienden in het zwembad.',de:'Ich treffe mich mit Freunden in dem Schwimmbad.'},
+  {k:10,type:'zin',nl:'Wij overnachten in een hotel.',de:'Wir übernachten in einem Hotel.'},
+  {k:10,type:'zin',nl:'We kunnen nu tennissen en daarna eten.',de:'Wir können jetzt Tennis spielen und danach essen.'},
+  {k:10,type:'zin',nl:'Ik wil liever eerst fietsen en daarna een boek lezen.',de:'Ich möchte lieber zuerst Rad fahren und danach ein Buch lesen.'},
+
+  /* ---------- KAPITEL 9 · LEESWOORDEN (Duits → Nederlands, met voorbeeldzin) ---------- */
+  {k:9,type:'lees',nl:'sturen',de:'schicken',ex:'Wenn die Jacke nicht passt, kannst du sie zurückschicken.'},
+  {k:9,type:'lees',nl:'het nadeel',de:'der Nachteil',ex:'Einkaufen im Internet hat auch Nachteile.'},
+  {k:9,type:'lees',nl:'jammer',de:'schade',ex:'Es ist schade, dass viele Geschäfte schließen müssen.'},
+  {k:9,type:'lees',nl:'kijken',de:'gucken',ex:'Die Frau will nichts kaufen, sondern nur gucken.'},
+  {k:9,type:'lees',nl:'het doel',de:'das Ziel',ex:'Die Frau hat kein besonderes Ziel.'},
+  {k:9,type:'lees',nl:'ruilen',de:'tauschen',ex:'Tauschen ist in den letzten Jahren immer mehr in Mode gekommen.'},
+  {k:9,type:'lees',nl:'het voorwerp',de:'der Gegenstand',ex:'Jakob tauscht Gegenstände gegen wertvollere Dinge.'},
+  {k:9,type:'lees',nl:'waardevol',de:'wertvoll',ex:'Jakob tauscht Gegenstände gegen wertvollere Dinge.'},
+  {k:9,type:'lees',nl:'de waarde',de:'der Wert',ex:'Jakob tauscht Gegenstände und erhöht so den Wert.'},
+  {k:9,type:'lees',nl:'aan het eind',de:'am Ende',ex:'Am Ende hatte Jakob einen Pullover.'},
+  {k:9,type:'lees',nl:'kiezen, beslissen',de:'entscheiden',ex:'Nach welchen Kriterien entscheidet Jakob, ob er ein Tauschobjekt nimmt?'},
+  {k:9,type:'lees',nl:'doneren',de:'spenden',ex:'Das letzte Tauschobjekt will Jakob einem Sportverein spenden.'},
+  {k:9,type:'lees',nl:'krijgen',de:'bekommen',ex:'Wie viel Taschengeld bekommt ihr?'},
+  {k:9,type:'lees',nl:'tamelijk',de:'ziemlich',ex:'Ich bekomme ziemlich viel Taschengeld.'},
+  {k:9,type:'lees',nl:'echter, maar',de:'allerdings',ex:'Ich bekomme viel Taschengeld, allerdings muss ich davon auch Schulsachen bezahlen.'},
+  {k:9,type:'lees',nl:'zich veroorloven',de:'sich leisten',ex:'Ich kann mir jetzt Scooter leisten.'},
+  {k:9,type:'lees',nl:'meteen',de:'sofort',ex:'Ich gebe alles Geld sofort aus.'},
+  {k:9,type:'lees',nl:'de kleren',de:'die Klamotten',ex:'Ich kaufe meistens Klamotten.'},
+  {k:9,type:'lees',nl:'raar',de:'komisch',ex:'Das fühlte sich komisch an.'},
+  {k:9,type:'lees',nl:'de eeuw',de:'das Jahrhundert',ex:'Ab dem 12. Jahrhundert breitete sich der Handel aus.'},
+  {k:9,type:'lees',nl:'bovendien',de:'außerdem',ex:'Außerdem war es gefährlich zu reisen.'},
+  {k:9,type:'lees',nl:'het lid',de:'das Mitglied',ex:'Sogar ganze Städte wurden Mitglied der Hanse.'},
+  {k:9,type:'lees',nl:'trots',de:'stolz',ex:'Die Städte sind stolz auf ihre Geschichte.'},
+
+  /* ---------- KAPITEL 10 · LEESWOORDEN (Duits → Nederlands, met voorbeeldzin) ---------- */
+  {k:10,type:'lees',nl:'opbellen',de:'anrufen',ex:'Ruft mich an unter der Nummer 48 67 00 33.'},
+  {k:10,type:'lees',nl:'in de buurt van',de:'in der Nähe von',ex:'Das Tropical Islands ist in der Nähe von Berlin.'},
+  {k:10,type:'lees',nl:'vermoeiend',de:'anstrengend',ex:'Es war anstrengend, so schnell Kanu zu fahren.'},
+  {k:10,type:'lees',nl:'spannend',de:'aufregend',ex:'Die Achterbahn ist total aufregend!'},
+  {k:10,type:'lees',nl:'aanbevelen',de:'empfehlen',ex:'Welche Show kannst du besonders empfehlen?'},
+  {k:10,type:'lees',nl:'sinds',de:'seit',ex:'Wir sind schon seit einer Woche in der Schweiz.'},
+  {k:10,type:'lees',nl:'uitlenen',de:'ausleihen',ex:'Diese Bücher darf man sich natürlich nicht ausleihen.'},
+  {k:10,type:'lees',nl:'dan',de:'als',ex:'Die Bücher sind mehr als tausend Jahre alt.'},
+  {k:10,type:'lees',nl:'het meer',de:'der See',ex:'Wir haben den Bodensee besucht.'},
+  {k:10,type:'lees',nl:'de vlinder',de:'der Schmetterling',ex:'Mir hat das Schmetterlingshaus am besten gefallen.'},
+];
+
+/* =====================================================================
+   ENGINE
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const screens = {menu:$('#menu'), intro:$('#intro'), play:$('#play'), end:$('#end')};
+function show(name){ for(const k in screens) screens[k].classList.toggle('hidden', k!==name); }
+
+const filter = {k:{9:true,10:true}, type:{woord:true,zin:true,lees:true}, dir:'nl2de'};
+const MODE_LABEL = {leren:'📖 Leren', quiz:'🎯 Quiz', typen:'⌨️ Typen'};
+
+let session = null;
+
+/* ---- filter chips ---- */
+document.querySelectorAll('.chip[data-k]').forEach(c=>c.onclick=()=>{
+  filter.k[c.dataset.k]=!filter.k[c.dataset.k]; c.classList.toggle('on'); refreshCount();
+});
+document.querySelectorAll('.chip[data-type]').forEach(c=>c.onclick=()=>{
+  filter.type[c.dataset.type]=!filter.type[c.dataset.type]; c.classList.toggle('on'); refreshCount();
+});
+document.querySelectorAll('.chip[data-dir]').forEach(c=>c.onclick=()=>{
+  filter.dir=c.dataset.dir;
+  document.querySelectorAll('.chip[data-dir]').forEach(x=>x.classList.toggle('on', x===c));
+  refreshCount();
+});
+
+function pool(){
+  return DATA.filter(d => filter.k[d.k] && filter.type[d.type]);
+}
+function refreshCount(){
+  const n = pool().length;
+  $('#count').textContent = n===0 ? '⚠️ Geen kaarten geselecteerd, kies minstens één Kapitel en onderdeel.' : `${n} kaarten geselecteerd.`;
+}
+refreshCount();
+
+/* ---- mode tiles: eerst de uitleg tonen ---- */
+document.querySelectorAll('.mode').forEach(m=>m.onclick=()=>showIntro(m.dataset.mode));
+
+const INTRO = {
+  leren: {
+    title:'📖 Leren met flashcards',
+    what:'Bekijk de kaartjes rustig en prent de vertaling in. Geen score, gewoon lezen en leren.',
+    steps:[
+      'Lees de voorkant van de kaart.',
+      'Bedenk zelf de vertaling.',
+      'Tik op de kaart om het antwoord te zien en controleer of je het goed had.',
+      'Klik op <b>🔊</b> om het woord of de zin te laten voorlezen.',
+      'Klik op <b>Volgende</b> voor de volgende kaart.'
+    ]
+  },
+  quiz: {
+    title:'🎯 Meerkeuzequiz',
+    what:'Kies bij elk woord of elke zin de juiste vertaling. Je score wordt bijgehouden.',
+    steps:[
+      'Lees het woord of de zin bovenaan.',
+      'Klik op de optie die jij denkt dat goed is.',
+      'Het juiste antwoord wordt groen; een fout antwoord rood.',
+      'Klik op <b>🔊</b> om het woord of de zin te laten voorlezen.',
+      'Klik op <b>Volgende</b> voor de volgende vraag.'
+    ]
+  },
+  typen: {
+    title:'⌨️ Vertaling typen',
+    what:'Typ de vertaling zelf in. Goed voor de spelling op de toets.',
+    steps:[
+      'Lees het woord of de zin bovenaan.',
+      'Typ de vertaling in het invulveld.',
+      'Druk op <b>Enter</b> of klik op <b>Controleer</b>.',
+      'Umlauten mag je ook als <b>ae / oe / ue / ss</b> typen.'
+    ]
+  }
+};
+
+function showIntro(mode){
+  if(pool().length===0){ refreshCount(); return; }
+  pendingMode = mode;
+  const info = INTRO[mode];
+  $('#introMode').textContent = MODE_LABEL[mode];
+  $('#introTitle').textContent = info.title;
+  $('#introWhat').textContent = info.what;
+  $('#introSteps').innerHTML = info.steps.map(s=>`<li>${s}</li>`).join('');
+  const dir = filter.dir==='nl2de' ? 'Nederlands → Duits' : 'Duits → Nederlands';
+  $('#introSet').textContent = `Richting: ${dir} · ${pool().length} kaarten`;
+  show('intro');
+}
+let pendingMode = null;
+$('#btnGo').onclick = ()=> start(pendingMode);
+$('#btnBack').onclick = ()=> show('menu');
+
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+/* prompt = wat je leest, answer = wat je moet weten */
+function sides(card){
+  return filter.dir==='nl2de'
+    ? {prompt:card.nl, answer:card.de, plang:'nl', alang:'de', ask:'Wat is dit in het Duits?'}
+    : {prompt:card.de, answer:card.nl, plang:'de', alang:'nl', ask:'Wat is dit in het Nederlands?'};
+}
+
+/* ---- voorlezen (browser text-to-speech) ---- */
+const TTS = ('speechSynthesis' in window);
+if(TTS) speechSynthesis.getVoices(); // warm up de stemmenlijst
+function pickVoice(code){
+  return speechSynthesis.getVoices().find(v=>v.lang.toLowerCase().startsWith(code));
+}
+function speak(text, lang){
+  if(!TTS) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang==='de' ? 'de-DE' : 'nl-NL';
+  u.rate = 0.95;
+  const v = pickVoice(lang);
+  if(v) u.voice = v;
+  speechSynthesis.speak(u);
+}
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+/* knop-html voor voorlezen; verborgen als de browser geen TTS heeft */
+function spk(text, lang){
+  if(!TTS) return '';
+  return ` <button class="spk" data-text="${esc(text)}" data-lang="${lang}" title="Voorlezen" aria-label="Voorlezen">🔊</button>`;
+}
+
+function start(mode){
+  const cards = pool();
+  if(cards.length===0){ refreshCount(); return; }
+  session = {mode, cards:shuffle(cards), i:0, score:0, done:0, total:cards.length, answered:false};
+  $('#pillMode').textContent = MODE_LABEL[mode];
+  show('play');
+  render();
+}
+
+function ktag(card){
+  const t = card.type==='woord'?'Woord':card.type==='zin'?'Zin':'Leeswoord';
+  return `Kapitel ${card.k} · ${t}`;
+}
+
+function render(){
+  const s = session;
+  if(s.i>=s.cards.length) return finish();
+  const card = s.cards[s.i];
+  const sd = sides(card);
+  s.answered = false;
+  $('#bar').style.width = (s.done/s.total*100)+'%';
+  $('#pillScore').innerHTML = s.mode==='leren' ? `Kaart <b>${s.i+1}</b>/${s.total}` : `Goed <b>${s.score}</b>/${s.total}`;
+  $('#ktag').textContent = ktag(card);
+  const stage = $('#stage');
+  const next = $('#btnNext');
+
+  if(s.mode==='leren'){
+    next.textContent = 'Volgende →';
+    next.disabled = false;
+    stage.innerHTML = `
+      <div class="flash" id="flash">
+        <div class="flashinner">
+          <div class="face front">
+            <div class="word">${sd.prompt}${spk(sd.prompt, sd.plang)}</div>
+            ${card.ex?`<div class="ex">"${card.ex}"${spk(card.ex,'de')}</div>`:''}
+            <div class="hintflip">tik om het antwoord te zien</div>
+          </div>
+          <div class="face back">
+            <div class="word">${sd.answer}${spk(sd.answer, sd.alang)}</div>
+            <div class="hintflip">tik om terug te draaien</div>
+          </div>
+        </div>
+      </div>`;
+    $('#flash').onclick = ()=> $('#flash').classList.toggle('flipped');
+
+  } else if(s.mode==='quiz'){
+    next.textContent = 'Overslaan →';
+    next.disabled = false;
+    const wrongs = shuffle(s.cards.filter(c=>c!==card)).slice(0,3).map(c=>sides(c).answer);
+    const opts = shuffle([sd.answer, ...wrongs]);
+    stage.innerHTML = `
+      <div class="prompt">${sd.prompt}${spk(sd.prompt, sd.plang)}</div>
+      ${card.ex?`<div class="ex center">"${card.ex}"${spk(card.ex,'de')}</div>`:''}
+      <div class="choices" id="choices"></div>`;
+    const box = $('#choices');
+    opts.forEach(o=>{
+      const b=document.createElement('button');
+      b.className='choice'; b.textContent=o;
+      b.onclick=()=>pick(b, o===sd.answer, sd.answer, box);
+      box.appendChild(b);
+    });
+
+  } else { /* typen */
+    next.textContent = 'Controleer';
+    next.disabled = false;
+    stage.innerHTML = `
+      <div class="prompt">${sd.prompt}${spk(sd.prompt, sd.plang)}</div>
+      ${card.ex?`<div class="ex center">"${card.ex}"${spk(card.ex,'de')}</div>`:''}
+      <input class="typein" id="typein" autocomplete="off" autocapitalize="off"
+             spellcheck="false" placeholder="${sd.ask}">
+      <div class="feedback" id="fb"></div>`;
+    const inp = $('#typein');
+    inp.focus();
+    inp.onkeydown = e => { if(e.key==='Enter') next.click(); };
+  }
+
+  /* voorlees-knoppen activeren (stopPropagation zodat de flashcard niet omdraait) */
+  stage.querySelectorAll('.spk').forEach(b=>b.onclick=e=>{
+    e.stopPropagation(); speak(b.dataset.text, b.dataset.lang);
+  });
+}
+
+/* ---- quiz answer ---- */
+function pick(btn, correct, answer, box){
+  if(session.answered) return;
+  session.answered = true;
+  session.done++;
+  [...box.children].forEach(b=>{ b.disabled=true; if(b.textContent===answer) b.classList.add('good'); });
+  if(correct){ session.score++; }
+  else { btn.classList.add('bad'); }
+  $('#pillScore').innerHTML = `Goed <b>${session.score}</b>/${session.total}`;
+  $('#bar').style.width = (session.done/session.total*100)+'%';
+}
+
+/* ---- typing check ---- */
+function norm(s){
+  return s.toLowerCase().trim()
+    .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+    .replace(/[.,!?]/g,'').replace(/\s+/g,' ');
+}
+function checkType(){
+  const s = session;
+  if(s.answered) return;
+  const card = s.cards[s.i];
+  const sd = sides(card);
+  const typed = $('#typein').value;
+  if(!typed.trim()) return;
+  s.answered = true; s.done++;
+  /* meerdere goede antwoorden gescheiden door komma of slash */
+  const alts = sd.answer.split(/[,/]/).map(norm);
+  const ok = alts.includes(norm(typed));
+  const fb = $('#fb');
+  $('#typein').disabled = true;
+  if(ok){ s.score++; fb.className='feedback good'; fb.textContent='✅ Goed!'; }
+  else { fb.className='feedback bad'; fb.innerHTML=`❌ Bijna! <small>Juiste antwoord: <b>${sd.answer}</b></small>`; }
+  $('#pillScore').innerHTML = `Goed <b>${s.score}</b>/${s.total}`;
+  $('#bar').style.width = (s.done/s.total*100)+'%';
+  $('#btnNext').textContent = 'Volgende →';
+}
+
+/* ---- next button ---- */
+$('#btnNext').onclick = ()=>{
+  const s = session;
+  if(s.mode==='typen' && !s.answered){ checkType(); return; }
+  if(s.mode==='leren') s.done++;
+  s.i++;
+  render();
+};
+$('#btnQuit').onclick = ()=> show('menu');
+
+/* ---- end screen ---- */
+function finish(){
+  const s = session;
+  show('end');
+  if(s.mode==='leren'){
+    $('#rank').textContent = '📚';
+    $('#endmsg').textContent = `Je hebt alle ${s.total} kaarten doorgenomen. Goed bezig!`;
+  } else {
+    const pct = Math.round(s.score/s.total*100);
+    const rank = pct>=90?'🏆 Top!':pct>=70?'🌟 Knap!':pct>=50?'👍 Goed op weg':'💪 Blijf oefenen';
+    $('#rank').textContent = rank;
+    $('#endmsg').textContent = `Je had ${s.score} van de ${s.total} goed (${pct}%).`;
+  }
+}
+$('#btnAgain').onclick = ()=> start(session.mode);
+$('#btnMenu').onclick = ()=> show('menu');
+</script>
+</body>
+</html>

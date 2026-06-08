@@ -22,6 +22,9 @@ inline CSS en JavaScript.
 - Gebruik relatieve paden (bijv. `topo/eu/`) zodat het werkt onder het
   `/edu-games/`-subpad van GitHub Pages.
 - Houd elke game in zijn eigen map; meng geen games in één bestand.
+- Games moeten mobile-friendly zijn: gebruik een responsive layout (o.a.
+  `<meta name="viewport">`, flexibele breedtes en `@media`-queries), zorg voor
+  voldoende grote tikdoelen en test dat alles bruikbaar is op een smal scherm.
 
 ## Een game toevoegen
 
