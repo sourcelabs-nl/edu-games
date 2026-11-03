@@ -1,0 +1,16 @@
+{
+  "name": "Eenheden omrekenen",
+  "short_name": "Eenheden",
+  "description": "Oefen eenheden omrekenen: lengte, oppervlakte, inhoud, liters, massa en tijd.",
+  "lang": "nl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a0420",
+  "theme_color": "#150a33",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

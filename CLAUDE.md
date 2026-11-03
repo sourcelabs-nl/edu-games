@@ -31,6 +31,8 @@ inline CSS en JavaScript.
 1. Nieuwe submap met `index.html`.
 2. Entry toevoegen aan de games-lijst in `index.html`
    (`title`, `desc`, `icon`, `url`, `tag`, `glow`, optioneel `soon: true`).
+   De nieuwste game staat altijd bovenaan: zet zijn categorie als eerste in de
+   lijst en de game als eerste binnen die categorie.
 
 ## Deployen
 

@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Eenheden omrekenen</title>
+<meta name="description" content="Oefen eenheden omrekenen: lengte, oppervlakte, inhoud, liters, massa en tijd.">
+<meta name="theme-color" content="#150a33">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Eenheden">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+  :root{
+    --text:#4b5563; --ink:#0f172a; --muted:#64748b; --bg:#f8fafc; --panel:#ffffff; --border:#e2e8f0;
+    --accent:#3a86ff; --accent2:#8338ec; --accent-soft:#eef4ff; --good:#1e9e55; --good-soft:#f0fdf4; --bad:#dc2626; --bad-soft:#fef2f2;
+    --shadow:0 1px 3px rgba(15,23,42,.08),0 8px 24px rgba(15,23,42,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:#0a0420 fixed;background-image:
+    radial-gradient(900px 600px at 18% 12%, rgba(131,56,236,.55), transparent 60%),
+    radial-gradient(800px 600px at 85% 20%, rgba(58,134,255,.55), transparent 60%),
+    radial-gradient(700px 600px at 10% 90%, rgba(6,214,160,.40), transparent 60%),
+    linear-gradient(160deg,#150a33,#0a0420 70%);background-attachment:fixed;color:var(--text);font:17px/1.5 system-ui,'Segoe UI',Roboto,sans-serif;
+    -webkit-text-size-adjust:100%;display:flex;justify-content:center;padding:16px;padding-top:max(16px,env(safe-area-inset-top));overflow-x:hidden}
+  #app{width:100%;max-width:560px}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:20px}
+  .hidden{display:none!important}
+
+  /* kop */
+  .hero{margin:4px 0 16px;display:flex;align-items:center;gap:12px;position:relative}
+  .hero > div{flex:1}
+  .menu-btn{background:none;border:1px solid rgba(255,255,255,.35);color:#fff;width:48px;min-height:48px;padding:0;display:flex;align-items:center;justify-content:center}
+  .menu-list{position:absolute;right:0;top:56px;z-index:8;background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:6px;min-width:180px}
+  .menu-list button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--ink);font-weight:400}
+  .kicker{color:#ffd166;font-size:15px}
+  .title{color:#fff;font-size:clamp(24px,6.5vw,32px);font-weight:700;margin:2px 0 0}
+
+  /* knoppen */
+  button{cursor:pointer;font:inherit;font-weight:600;border-radius:12px;padding:12px 18px;min-height:48px}
+  .btn{background:var(--accent);color:#fff;border:1px solid var(--accent)}
+  .btn.alt{background:var(--accent2);color:#fff;border:1px solid var(--accent2)}
+  .btn.ghost{background:var(--panel);color:var(--ink);border:1px solid var(--border)}
+  .btn.wide{width:100%}
+
+  /* menu */
+  .modes{display:grid;gap:12px}
+  .mode{text-align:left;width:100%;padding:16px}
+  .mode small{display:block;font-weight:400;font-size:15px;opacity:.85;margin-top:2px}
+  .rules{margin-top:16px;color:var(--ink)}
+  .rules summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:center;min-height:48px;
+    border:1px solid var(--accent);border-radius:12px;color:var(--accent);font-weight:600}
+  .rules summary::-webkit-details-marker{display:none}
+  .rules[open] summary{margin-bottom:10px}
+  .rules p{margin:6px 0}
+
+  /* spelbalk */
+  .topbar{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+  .topbar .btn{min-height:40px;padding:6px 12px;font-size:15px}
+  .level{flex:1;font-size:15px;color:var(--muted)}
+  .level .name{color:var(--ink);font-weight:600}
+  .stars{display:none}
+  .streak{display:flex;gap:6px;align-items:center}
+  .dot{width:12px;height:12px;border-radius:50%;background:var(--border)}
+  .dot.on{background:var(--good)}
+  .counter{color:var(--muted);font-size:15px}
+
+  /* de som */
+  .question{display:flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;
+    font-size:clamp(24px,6.5vw,32px);font-weight:600;color:var(--ink);margin:8px 0 16px}
+  .unit{color:var(--accent2)}
+  .answer-row{display:flex;align-items:center;gap:8px;min-width:0}
+  #answer{width:clamp(100px,32vw,190px);font:inherit;font-weight:600;text-align:right;color:var(--ink);
+    padding:8px 12px;border:2px solid var(--border);border-radius:12px;outline:none;background:var(--panel)}
+  #answer:focus{border-color:var(--accent)}
+  #answer.wrong{border-color:var(--bad);background:var(--bad-soft)}
+  #answer.right{border-color:var(--good);background:var(--good-soft)}
+  .hint-small{text-align:center;color:var(--muted);font-size:15px;min-height:1.5em;margin:-6px 0 10px}
+
+  /* feedback */
+  .feedback{margin-top:16px;border-radius:12px;padding:14px 16px;line-height:1.5}
+  .feedback.good{background:var(--good-soft);border:1px solid var(--good)}
+  .feedback.bad{background:var(--bad-soft);border:1px solid var(--bad)}
+  .fb-head{font-size:17px;font-weight:700;margin-bottom:4px}
+  .good .fb-head{color:var(--good)}
+  .bad .fb-head{color:var(--bad)}
+  .compare{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:baseline;margin:6px 0 10px}
+  .compare .yours{text-decoration:line-through;color:var(--bad)}
+  .compare .correct{color:var(--good);font-weight:700;font-size:17px}
+  .tip{margin:8px 0;color:var(--ink)}
+
+  /* trap en stappen */
+  .ladder{display:flex;gap:4px;overflow-x:auto;padding:4px 0;margin:8px 0}
+  .rung{flex:0 0 auto;min-width:40px;text-align:center;padding:5px 4px;border-radius:8px;background:var(--bg);border:1px solid var(--border);font-size:15px;color:var(--muted)}
+  .rung.path{background:var(--accent-soft);color:var(--ink)}
+  .rung.from{background:var(--accent);border-color:var(--accent);color:#fff}
+  .rung.to{background:var(--good);border-color:var(--good);color:#fff}
+  .chain{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0;font-size:15px}
+  .chain .step{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:3px 8px;color:var(--ink)}
+  .chain .step.last{border-color:var(--good);font-weight:700}
+  .chain .op{color:var(--muted);white-space:nowrap}
+  .retype{margin-top:10px;font-weight:600;color:var(--ink)}
+
+  /* toets-resultaat */
+  .grade{font-size:56px;font-weight:700;text-align:center;line-height:1}
+  .grade.pass{color:var(--good)}
+  .grade.fail{color:var(--bad)}
+  .result-msg{text-align:center;color:var(--ink);margin:8px 0 16px}
+  .review{display:grid;gap:10px;margin:12px 0 18px}
+  .review-item{border:1px solid var(--border);border-radius:12px;padding:10px 12px;font-size:15px}
+  .review-item.bad{border-color:var(--bad);background:var(--bad-soft)}
+  .review-item .q{font-weight:600;color:var(--ink)}
+  .actions{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+
+  /* hint, pauze, meldingen */
+  .hint-btn{background:none;border:1px solid var(--accent);color:var(--accent);width:100%;margin-top:10px}
+  .hint-box{background:var(--accent-soft);border-radius:12px;padding:12px 14px;margin-top:8px;font-size:17px;color:var(--ink)}
+  .pause{text-align:center}
+  .pause p{font-size:17px;color:var(--ink);margin:10px 0 20px}
+  #banner{position:fixed;left:50%;top:16px;transform:translateX(-50%);z-index:6;opacity:0;pointer-events:none;
+    background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:10px 16px;box-shadow:var(--shadow);
+    color:var(--ink);font-weight:600;text-align:center;transition:opacity .3s;width:max-content;max-width:92vw}
+  #banner.show{opacity:1}
+  #toast{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:7;
+    background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:8px 8px 8px 16px;box-shadow:var(--shadow);
+    display:flex;align-items:center;gap:12px;color:var(--ink);width:max-content;max-width:92vw}
+  #toast .btn{min-height:40px;padding:6px 14px}
+
+  @media (max-width:420px){
+    body{padding:12px}
+    .card{padding:16px}
+    .actions{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div id="banner"></div>
+<div id="toast" class="hidden">Er is een nieuwe versie <button class="btn" id="btn-reload">Vernieuwen</button></div>
+
+<div id="app">
+  <header class="hero">
+    <div>
+      <div class="kicker">Science · klas 1</div>
+      <h1 class="title">Eenheden omrekenen</h1>
+    </div>
+    <button class="menu-btn" id="btn-hamburger" type="button" aria-label="Menu" aria-expanded="false"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <div class="menu-list hidden" id="menu-list">
+      <button type="button" id="btn-stop">Stoppen</button>
+      <button type="button" onclick="location.href='../../'">Alle games</button>
+    </div>
+  </header>
+
+  <!-- MENU -->
+  <section id="menu" class="card">
+    <div class="modes">
+      <button class="btn mode" id="btn-practice">
+        <span>Oefenen<small id="menu-level">Begint makkelijk en wordt steeds moeilijker</small></span>
+      </button>
+      <button class="btn alt mode" id="btn-test">
+        <span>Toets<small>15 sommen zoals op de echte toets, elke fout is 1 punt eraf</small></span>
+      </button>
+    </div>
+    <details class="rules">
+      <summary>Uitleg</summary>
+      <div class="ladder"><span class="rung from">km</span><span class="rung">hm</span><span class="rung">dam</span><span class="rung">m</span><span class="rung">dm</span><span class="rung">cm</span><span class="rung to">mm</span></div>
+      <p>Naar rechts: ×10 per stap. Met ² ×100, met ³ ×1000.</p>
+      <p>1 L = 1 dm³</p>
+    </details>
+  </section>
+
+  <!-- SPELEN -->
+  <section id="play" class="card hidden">
+    <div class="topbar">
+      <div class="level" id="level-box">
+        <div class="name" id="level-name"></div>
+        <div class="stars" id="level-stars"></div>
+      </div>
+      <div class="streak" id="streak-box" title="3 goed op rij = volgend niveau">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      </div>
+      <div class="counter hidden" id="test-counter"></div>
+    </div>
+
+    <form id="q-form" autocomplete="off">
+      <div class="question" id="question">
+        <span><span id="q-value"></span> <span class="unit" id="q-from"></span></span>
+        <span>=</span>
+        <span class="answer-row">
+          <input id="answer" type="text" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Jouw antwoord">
+          <span class="unit" id="q-to"></span>
+        </span>
+      </div>
+      <div class="hint-small" id="input-hint"></div>
+      <button class="btn wide" id="btn-check" type="submit">Controleer</button>
+    </form>
+
+    <button class="hint-btn" id="btn-hint" type="button">Hint</button>
+    <div id="hint-box" class="hint-box hidden"></div>
+    <div id="feedback" class="feedback hidden"></div>
+  </section>
+
+  <!-- PAUZE -->
+  <section id="pause" class="card pause hidden">
+    <b>Even pauze. Wist je dat...</b>
+    <p id="fact"></p>
+    <button class="btn wide" id="btn-resume">Verder</button>
+  </section>
+
+  <!-- TOETS-RESULTAAT -->
+  <section id="result" class="card hidden">
+    <div class="grade" id="grade"></div>
+    <div class="result-msg" id="result-msg"></div>
+    <div class="review" id="review"></div>
+    <div class="actions">
+      <button class="btn alt" id="btn-again">Nog een toets</button>
+      <button class="btn ghost" id="btn-menu">Menu</button>
+    </div>
+  </section>
+</div>
+
+<!-- =====================================================================
+     REKENLOGICA — geen DOM hier, zodat dit los te testen is.
+     Getallen worden als tekst met een komma bewaard ("0,023") en de komma
+     wordt als tekst verschoven, zodat er geen afrondingsfouten ontstaan.
+     ===================================================================== -->
+<script id="logic">
+const PREFIXES = [
+  { p: 'k', e: 3 }, { p: 'h', e: 2 }, { p: 'da', e: 1 }, { p: '', e: 0 },
+  { p: 'd', e: -1 }, { p: 'c', e: -2 }, { p: 'm', e: -3 }
+];
+
+// offset: macht van 10 ten opzichte van de basis van de groep (1 L = 0,001 m³)
+const FAMILIES = {
+  lengte: { base: 'm', pow: 1, offset: 0 },
+  opp:    { base: 'm', pow: 2, offset: 0 },
+  kubiek: { base: 'm', pow: 3, offset: 0 },
+  liter:  { base: 'L', pow: 1, offset: -3 },
+  massa:  { base: 'g', pow: 1, offset: 0 },
+  tijd:   { base: 's', pow: 1, offset: 0, firstPrefix: 2 } // alleen das t/m ms
+};
+
+const SUPERSCRIPT = { 1: '', 2: '²', 3: '³' };
+const UNITS = {};
+for (const [fam, f] of Object.entries(FAMILIES)) {
+  f.units = PREFIXES
+    .map((pr, idx) => ({ sym: pr.p + f.base + SUPERSCRIPT[f.pow], fam, idx, exp: pr.e * f.pow + f.offset }))
+    .filter(u => u.idx >= (f.firstPrefix || 0));
+  f.units.forEach(u => { UNITS[u.sym] = u; });
+}
+
+/* ---------- getallen als tekst ---------- */
+
+// "0012,500" -> "12,5"
+function canonical(str) {
+  let [int, frac = ''] = str.split(',');
+  int = int.replace(/^0+/, '') || '0';
+  frac = frac.replace(/0+$/, '');
+  return frac ? int + ',' + frac : int;
+}
+
+// Verschuift de komma n plaatsen naar rechts (n < 0: naar links).
+function shiftComma(str, n) {
+  const [int, frac = ''] = canonical(str).split(',');
+  const digits = (int + frac).replace(/^0+/, '') || '0';
+  if (digits === '0') return '0';
+  const decimals = frac.length - n;
+  if (decimals <= 0) return canonical(digits + '0'.repeat(-decimals));
+  const padded = digits.padStart(decimals + 1, '0');
+  return canonical(padded.slice(0, -decimals) + ',' + padded.slice(-decimals));
+}
+
+function convert(value, fromSym, toSym) {
+  return shiftComma(value, UNITS[fromSym].exp - UNITS[toSym].exp);
+}
+
+// "6786,5" -> "6.786,5" (zoals op de toets)
+function formatNL(value) {
+  const [int, frac] = value.split(',');
+  const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return frac ? grouped + ',' + frac : grouped;
+}
+
+/* ---------- antwoord lezen en nakijken ---------- */
+
+// Geeft de mogelijke betekenissen van wat er getypt is. "3.890" kan
+// duizendtallen zijn (3890) of een punt-als-komma (3,89): beide tellen mee.
+function readAnswer(raw) {
+  const t = raw.replace(/\s/g, '');
+  const options = [];
+  if (/^\d+(\.\d{3})*(,\d+)?$/.test(t)) options.push({ value: canonical(t.replace(/\./g, '')), dot: false });
+  if (/^,\d+$/.test(t)) options.push({ value: canonical('0' + t), dot: false });
+  if (/^\d*\.\d+$/.test(t)) options.push({ value: canonical('0' + t.replace('.', ',')), dot: true });
+  return options;
+}
+
+function significantDigits(value) {
+  return value.replace(',', '').replace(/^0+/, '').replace(/0+$/, '');
+}
+
+// Plaats van het eerste cijfer dat geen 0 is: 840 -> 2, 0,05 -> -2
+function magnitude(value) {
+  const [int, frac = ''] = value.split(',');
+  if (int !== '0') return int.length - 1;
+  return -(frac.match(/^0*/)[0].length + 1);
+}
+
+function diagnose(given, question) {
+  if (given === '0' || significantDigits(given) !== significantDigits(question.answer)) {
+    return { type: 'digits' };
+  }
+  const diff = magnitude(given) - magnitude(question.answer);
+  if (question.shift !== 0 && diff === -2 * question.shift) return { type: 'direction' };
+  return { type: 'comma', places: Math.abs(diff), side: diff > 0 ? 'rechts' : 'links' };
+}
+
+function checkAnswer(question, raw) {
+  const options = readAnswer(raw);
+  if (!options.length) return { valid: false };
+  const hit = options.find(o => o.value === question.answer);
+  if (hit) return { valid: true, ok: true, dotTip: hit.dot };
+  const given = options[0].value;
+  return { valid: true, ok: false, given, hint: diagnose(given, question) };
+}
+
+/* ---------- uitleg: stap voor stap over de trap ---------- */
+
+// Elke stap: { value, sym, op }. Bij liters <-> m³ gaat de route via 1 L = 1 dm³.
+function explainSteps(question) {
+  const from = UNITS[question.from];
+  const to = UNITS[question.to];
+  const segments = [];
+  if (from.fam === to.fam) {
+    segments.push({ fam: from.fam, a: from.idx, b: to.idx });
+  } else if (from.fam === 'liter') {
+    segments.push({ fam: 'liter', a: from.idx, b: 3 }, { bridge: 'dm³' }, { fam: 'kubiek', a: 4, b: to.idx });
+  } else {
+    segments.push({ fam: 'kubiek', a: from.idx, b: 4 }, { bridge: 'L' }, { fam: 'liter', a: 3, b: to.idx });
+  }
+
+  let value = question.value;
+  const steps = [{ value, sym: question.from, op: '' }];
+  for (const seg of segments) {
+    if (seg.bridge) {
+      steps.push({ value, sym: seg.bridge, op: '1 L = 1 dm³' });
+      continue;
+    }
+    const f = FAMILIES[seg.fam];
+    const dir = Math.sign(seg.b - seg.a);
+    for (let i = seg.a; i !== seg.b; i += dir) {
+      const next = f.units.find(u => u.idx === i + dir);
+      value = shiftComma(value, dir * f.pow);
+      steps.push({ value, sym: next.sym, op: (dir > 0 ? '×' : '÷') + formatNL(String(10 ** f.pow)) });
+    }
+  }
+  return { segments, steps };
+}
+
+/* ---------- sommen maken ---------- */
+
+const LEVELS = [
+  null,
+  { name: 'Opwarmen', kinds: ['lengte', 'massa', 'liter'], maxSteps: 2, wholeNumbers: true },
+  { name: 'Kommagetallen', kinds: ['lengte', 'massa', 'liter'], maxSteps: 6, scales: [0, 3], maxInt: 9, maxDec: 6 },
+  { name: 'Kwadraat & kubus', kinds: ['opp', 'kubiek'], maxSteps: 3, scales: [0, 3], maxInt: 10, maxDec: 8 },
+  { name: 'Toetsniveau', kinds: ['lengte', 'massa', 'opp', 'kubiek', 'mixed', 'mixed', 'tijd'], maxSteps: 6, scales: [-6, 7], maxInt: 10, maxDec: 9 }
+];
+const MAX_LEVEL = LEVELS.length - 1;
+
+// Zelfde soort mix als de echte toets.
+const TEST_KINDS = ['lengte', 'kubiek', 'mixed', 'opp', 'massa', 'kubiek', 'lengte', 'massa',
+                    'opp', 'tijd', 'kubiek', 'lengte', 'mixed', 'kubiek', 'mixed'];
+
+const randInt = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+const pick = list => list[randInt(0, list.length - 1)];
+
+function pickUnits(kind, maxSteps) {
+  if (kind === 'mixed') {
+    const pair = [pick(FAMILIES.liter.units), pick(FAMILIES.kubiek.units)];
+    return Math.random() < 0.5 ? pair : pair.reverse();
+  }
+  const units = FAMILIES[kind].units;
+  while (true) {
+    const a = pick(units);
+    const b = pick(units);
+    const steps = Math.abs(a.idx - b.idx);
+    if (steps >= 1 && steps <= maxSteps) return [a, b];
+  }
+}
+
+// 1 tot 4 cijfers, met de komma ergens tussen (of nullen erachter).
+function randomValue([minScale, maxScale]) {
+  const length = randInt(1, 4);
+  let digits = String(randInt(1, 9));
+  for (let i = 1; i < length; i++) digits += randInt(0, 9);
+  const decimals = randInt(minScale, maxScale);
+  if (decimals > 0 && digits.endsWith('0')) digits = digits.slice(0, -1) + randInt(1, 9);
+  return shiftComma(digits, -decimals);
+}
+
+// Niveau 1: alleen hele getallen, ook in het antwoord.
+function wholeValue(from, to) {
+  const k = randInt(1, 99);
+  const steps = from.exp - to.exp;
+  return steps > 0 ? String(k) : shiftComma(String(k), -steps);
+}
+
+function fits(value, maxInt, maxDec) {
+  const [int, frac = ''] = value.split(',');
+  return int.length <= maxInt && frac.length <= maxDec;
+}
+
+function makeQuestion(level, kind) {
+  const L = LEVELS[level];
+  for (let tries = 0; tries < 1000; tries++) {
+    const [from, to] = pickUnits(kind || pick(L.kinds), L.maxSteps);
+    const value = L.wholeNumbers ? wholeValue(from, to) : randomValue(L.scales);
+    const answer = convert(value, from.sym, to.sym);
+    if (!L.wholeNumbers && !(fits(value, 9, 7) && fits(answer, L.maxInt, L.maxDec))) continue;
+    return { level, value, from: from.sym, to: to.sym, answer, shift: from.exp - to.exp };
+  }
+  throw new Error('Geen som gevonden voor niveau ' + level);
+}
+
+/* ---------- adaptief niveau ---------- */
+
+const STREAK_UP = 3;   // zoveel goed op rij: niveau omhoog
+const MISSES_DOWN = 2; // zoveel fout op rij: niveau omlaag
+
+function updateProgress(state, correct) {
+  const next = { ...state, change: 0 };
+  if (correct) {
+    next.streak = state.streak + 1;
+    next.misses = 0;
+    if (next.streak >= STREAK_UP && state.level < MAX_LEVEL) {
+      next.level = state.level + 1; next.streak = 0; next.change = 1;
+    }
+  } else {
+    next.misses = state.misses + 1;
+    next.streak = 0;
+    if (next.misses >= MISSES_DOWN && state.level > 1) {
+      next.level = state.level - 1; next.misses = 0; next.change = -1;
+    }
+  }
+  return next;
+}
+
+function testGrade(mistakes) {
+  return Math.max(1, 10 - mistakes);
+}
+</script>
+
+<!-- =====================================================================
+     SPEL — schermen, invoer en feedback
+     ===================================================================== -->
+<script>
+const $ = id => document.getElementById(id);
+const LEVEL_KEY = 'eenheden-niveau';
+
+function loadLevel() {
+  try { return Math.min(MAX_LEVEL, Math.max(1, Number(localStorage.getItem(LEVEL_KEY)) || 1)); }
+  catch { return 1; }
+}
+function saveLevel(level) {
+  try { localStorage.setItem(LEVEL_KEY, String(level)); } catch {}
+}
+
+const game = {
+  mode: 'practice',          // 'practice' of 'test'
+  progress: { level: loadLevel(), streak: 0, misses: 0 },
+  question: null,
+  phase: 'answer',           // 'answer' of 'retype' (na een fout het goede antwoord overtypen)
+  test: { index: 0, questions: [], answers: [] }
+};
+
+
+const PAUSE_EVERY = 10; // na zoveel sommen een korte pauze met een weetje
+const FACTS = [
+  'Een pak melk is 1 L. Dat is precies 1 dm³: een kubus van 10 cm bij 10 cm bij 10 cm.',
+  '1 liter water weegt ongeveer 1 kg.',
+  'Een theelepel is ongeveer 5 mL.',
+  'Een voetbalveld is ongeveer 0,7 hm². Een hm² heet ook wel een hectare.',
+  'Een A4-blaadje is ongeveer 6 dm².',
+  'Een knipoog duurt ongeveer 1 tot 4 ds.',
+  'Een olifant weegt ongeveer 5.000 kg.'
+];
+
+/* ---------- schermen ---------- */
+
+function toggleMenu(open = $('menu-list').classList.contains('hidden')) {
+  $('menu-list').classList.toggle('hidden', !open);
+  $('btn-hamburger').setAttribute('aria-expanded', String(open));
+}
+
+function show(screen) {
+  ['menu', 'play', 'pause', 'result'].forEach(s => $(s).classList.toggle('hidden', s !== screen));
+  $('btn-stop').classList.toggle('hidden', screen === 'menu');
+  toggleMenu(false);
+  window.scrollTo(0, 0);
+}
+
+function showMenu() {
+  const lvl = game.progress.level;
+  $('menu-level').textContent = lvl > 1
+    ? `Je zit op niveau ${lvl}: ${LEVELS[lvl].name}`
+    : 'Begint makkelijk en wordt steeds moeilijker';
+  show('menu');
+}
+
+function startPractice() {
+  game.mode = 'practice';
+  game.progress = { level: loadLevel(), streak: 0, misses: 0 };
+  game.answered = 0;
+  $('level-box').classList.remove('hidden');
+  $('streak-box').classList.remove('hidden');
+  $('test-counter').classList.add('hidden');
+  $('btn-hint').classList.remove('hidden');
+  show('play');
+  nextQuestion();
+}
+
+function startTest() {
+  game.mode = 'test';
+  game.test = { index: 0, questions: TEST_KINDS.map(k => makeQuestion(MAX_LEVEL, k)), answers: [] };
+  $('level-box').classList.add('hidden');
+  $('streak-box').classList.add('hidden');
+  $('test-counter').classList.remove('hidden');
+  $('btn-hint').classList.add('hidden');
+  show('play');
+  nextQuestion();
+}
+
+/* ---------- een som tonen ---------- */
+
+function renderLevel() {
+  const lvl = game.progress.level;
+  $('level-name').textContent = `Niveau ${lvl} · ${LEVELS[lvl].name}`;
+  $('level-stars').textContent = '★'.repeat(lvl) + '☆'.repeat(MAX_LEVEL - lvl);
+  document.querySelectorAll('#streak-box .dot').forEach((d, i) => d.classList.toggle('on', i < game.progress.streak));
+}
+
+function nextQuestion() {
+  if (game.mode === 'test') {
+    game.question = game.test.questions[game.test.index];
+    $('test-counter').textContent = `Vraag ${game.test.index + 1} / ${TEST_KINDS.length}`;
+  } else {
+    game.question = makeQuestion(game.progress.level);
+    renderLevel();
+  }
+  const q = game.question;
+  $('q-value').textContent = formatNL(q.value);
+  $('q-from').textContent = q.from;
+  $('q-to').textContent = q.to;
+  game.phase = 'answer';
+  const input = $('answer');
+  input.value = '';
+  input.className = '';
+  input.placeholder = '?';
+  $('input-hint').textContent = '';
+  $('btn-check').textContent = game.mode === 'test' ? 'Volgende' : 'Controleer';
+  $('feedback').className = 'feedback hidden';
+  $('hint-box').classList.add('hidden');
+  input.focus();
+}
+
+// Na een som: eerst een pauze als het tijd is, anders de volgende som.
+function continuePractice() {
+  game.answered++;
+  if (game.answered % PAUSE_EVERY === 0) {
+    $('fact').textContent = FACTS[(game.answered / PAUSE_EVERY - 1) % FACTS.length];
+    show('pause');
+  } else {
+    nextQuestion();
+  }
+}
+
+function resumeAfterPause() {
+  show('play');
+  nextQuestion();
+}
+
+// De hint laat de trap zien, niet het antwoord. De reeks blijft gewoon staan.
+function showHint() {
+  const q = game.question;
+  const { segments } = explainSteps(q);
+  const ladders = segments.filter(s => !s.bridge && s.a !== s.b).map(ladderHtml).join('');
+  const bridge = segments.some(s => s.bridge) ? '<div>Onthoud: <b>1 L = 1 dm³</b>.</div>' : '';
+  const factor = formatNL(String(10 ** FAMILIES[UNITS[q.from].fam].pow));
+  const rule = UNITS[q.from].fam === UNITS[q.to].fam
+    ? `<div>Elke stap is <b>×${factor}</b> naar rechts of <b>÷${factor}</b> naar links.</div>` : '';
+  $('hint-box').innerHTML = `<div>Van <b>${q.from}</b> naar <b>${q.to}</b>:</div>${ladders}${rule}${bridge}`;
+  $('hint-box').classList.remove('hidden');
+  $('answer').focus();
+}
+
+/* ---------- nakijken ---------- */
+
+function onSubmit(e) {
+  e.preventDefault();
+  const raw = $('answer').value;
+  if (!raw.trim()) return;
+
+  if (game.phase === 'retype') return onRetype(raw);
+
+  const result = checkAnswer(game.question, raw);
+  if (!result.valid) {
+    $('input-hint').textContent = 'Typ alleen cijfers en een komma, bijvoorbeeld 0,25';
+    return;
+  }
+
+  if (game.mode === 'test') {
+    game.test.answers.push({ raw, ok: result.ok });
+    game.test.index++;
+    if (game.test.index < TEST_KINDS.length) nextQuestion(); else showTestResult();
+    return;
+  }
+
+  const before = game.progress.level;
+  game.progress = updateProgress(game.progress, result.ok);
+  saveLevel(game.progress.level);
+  renderLevel();
+  if (result.ok) showRight(result); else showWrong(result);
+  if (game.progress.change) showLevelChange(game.progress.change, before);
+}
+
+function showRight(result) {
+  $('answer').className = 'right';
+  $('hint-box').classList.add('hidden');
+  const fb = $('feedback');
+  fb.className = 'feedback good';
+  fb.innerHTML = `<div class="fb-head">Goed</div>` +
+    (result.dotTip ? `<div class="tip">Tip: in Nederland schrijf je een <b>komma</b>, geen punt: ${formatNL(game.question.answer)}</div>` : '');
+  setTimeout(continuePractice, result.dotTip ? 2600 : 1100);
+}
+
+function hintText(hint) {
+  if (hint.type === 'direction') {
+    return 'Je hebt de komma de <b>verkeerde kant</b> op geschoven. Naar een kleinere eenheid wordt het getal groter, naar een grotere eenheid kleiner.';
+  }
+  if (hint.type === 'comma') {
+    const plaatsen = hint.places === 1 ? '1 plaats' : `${hint.places} plaatsen`;
+    return `De cijfers kloppen, maar de komma staat <b>${plaatsen} te ver naar ${hint.side}</b>.`;
+  }
+  return 'Er klopt iets niet aan de cijfers. Neem de cijfers van de som over en schuif alleen de komma.';
+}
+
+function showWrong(result) {
+  const input = $('answer');
+  input.className = 'wrong';
+
+  const q = game.question;
+  $('hint-box').classList.add('hidden');
+  const fb = $('feedback');
+  fb.className = 'feedback bad';
+  fb.innerHTML = `
+    <div class="fb-head">Niet goed</div>
+    <div class="compare">
+      <span>Jij:</span><span class="yours">${formatNL(result.given)} ${q.to}</span>
+      <span>Goed:</span><span class="correct">${formatNL(q.answer)} ${q.to}</span>
+    </div>
+    <div class="tip">${hintText(result.hint)}</div>
+    ${explanationHtml(q, false)}
+    <div class="retype">Typ het goede antwoord over.</div>`;
+
+  game.phase = 'retype';
+  input.value = '';
+  input.placeholder = 'overtypen';
+  $('input-hint').textContent = 'Typ het goede antwoord over';
+  $('btn-check').textContent = 'Verder';
+  setTimeout(() => input.focus(), 50);
+}
+
+function onRetype(raw) {
+  const options = readAnswer(raw);
+  if (options.some(o => o.value === game.question.answer)) {
+    $('answer').className = 'right';
+    setTimeout(continuePractice, 400);
+  } else {
+    $('input-hint').textContent = `Kijk goed: ${formatNL(game.question.answer)}`;
+  }
+}
+
+/* ---------- uitleg ---------- */
+
+function ladderHtml(seg) {
+  const lo = Math.min(seg.a, seg.b), hi = Math.max(seg.a, seg.b);
+  return '<div class="ladder">' + FAMILIES[seg.fam].units.map(u => {
+    let cls = 'rung';
+    if (u.idx === seg.a) cls += ' from';
+    else if (u.idx === seg.b) cls += ' to';
+    else if (u.idx > lo && u.idx < hi) cls += ' path';
+    return `<span class="${cls}">${u.sym}</span>`;
+  }).join('') + '</div>';
+}
+
+function explanationHtml(q, withLadder = true) {
+  const { segments, steps } = explainSteps(q);
+  const places = Math.abs(q.shift);
+  const side = q.shift > 0 ? 'rechts' : 'links';
+  const ladders = withLadder ? segments.filter(s => !s.bridge && s.a !== s.b).map(ladderHtml).join('') : '';
+  const chain = steps.map((s, i) =>
+    (s.op ? `<span class="op">${s.op} →</span>` : '') +
+    `<span class="step${i === steps.length - 1 ? ' last' : ''}">${formatNL(s.value)} ${s.sym}</span>`
+  ).join('');
+  return `
+    <div><b>Zo reken je het uit:</b> de komma gaat <b>${places} ${places === 1 ? 'plaats' : 'plaatsen'} naar ${side}</b>.</div>
+    ${ladders}
+    <div class="chain">${chain}</div>`;
+}
+
+/* ---------- toets-resultaat ---------- */
+
+function showTestResult() {
+  const answers = game.test.answers;
+  const mistakes = answers.filter(a => !a.ok).length;
+  const grade = testGrade(mistakes);
+  const pass = grade >= 7;
+  $('grade').textContent = grade;
+  $('grade').className = 'grade ' + (pass ? 'pass' : 'fail');
+  $('result-msg').textContent = mistakes === 0
+    ? 'Alles goed.'
+    : `${mistakes} ${mistakes === 1 ? 'fout' : 'fouten'}. ${pass ? 'Voldoende.' : 'Nog even oefenen.'}`;
+
+  $('review').innerHTML = game.test.questions.map((q, i) => {
+    const a = answers[i];
+    const line = `<div class="q">${i + 1}. ${formatNL(q.value)} ${q.from} = ${formatNL(q.answer)} ${q.to}</div>`;
+    if (a.ok) return `<div class="review-item">${line}</div>`;
+    return `<div class="review-item bad">${line}<div>Jij: <s>${escapeHtml(a.raw)}</s></div>${explanationHtml(q)}</div>`;
+  }).join('');
+
+  show('result');
+}
+
+/* ---------- effecten ---------- */
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+function showLevelChange(change, before) {
+  const b = $('banner');
+  const lvl = game.progress.level;
+  b.textContent = change > 0
+    ? `Volgend niveau: ${LEVELS[lvl].name}`
+    : `Even een niveau lager: ${LEVELS[lvl].name}`;
+  b.classList.add('show');
+  setTimeout(() => b.classList.remove('show'), 1800);
+}
+
+/* ---------- start ---------- */
+
+$('btn-practice').onclick = startPractice;
+$('btn-test').onclick = startTest;
+$('btn-stop').onclick = showMenu;
+$('btn-hamburger').onclick = e => { e.stopPropagation(); toggleMenu(); };
+document.addEventListener('click', e => { if (!$('menu-list').contains(e.target)) toggleMenu(false); });
+$('btn-again').onclick = startTest;
+$('btn-menu').onclick = showMenu;
+$('btn-hint').onclick = showHint;
+$('btn-resume').onclick = resumeAfterPause;
+$('btn-reload').onclick = () => location.reload();
+$('q-form').addEventListener('submit', onSubmit);
+showMenu();
+
+// Service worker: offline spelen, en een melding als er een nieuwe versie is.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const worker = reg.installing;
+        worker.addEventListener('statechange', () => {
+          if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+            $('toast').classList.remove('hidden');
+          }
+        });
+      });
+    }).catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
