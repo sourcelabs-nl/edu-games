@@ -72,6 +72,8 @@
   .question{display:flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;
     font-size:clamp(24px,6.5vw,32px);font-weight:600;color:var(--ink);margin:8px 0 16px}
   .unit{color:var(--accent2)}
+  button.unit{background:none;border:0;padding:0;min-height:0;font:inherit;cursor:pointer;
+    text-decoration:underline dotted 2px;text-underline-offset:6px}
   .answer-row{display:flex;align-items:center;gap:8px;min-width:0}
   #answer{width:clamp(100px,32vw,190px);font:inherit;font-weight:600;text-align:right;color:var(--ink);
     padding:8px 12px;border:2px solid var(--border);border-radius:12px;outline:none;background:var(--panel)}
@@ -95,6 +97,8 @@
   /* trap en stappen */
   .ladder{display:flex;gap:4px;overflow-x:auto;padding:4px 0;margin:8px 0}
   .rung{flex:0 0 auto;min-width:40px;text-align:center;padding:5px 4px;border-radius:8px;background:var(--bg);border:1px solid var(--border);font-size:15px;color:var(--muted)}
+  .ladder{align-items:center}
+  .hop{flex:0 0 auto;color:var(--accent);font-weight:800}
   .rung.path{background:var(--accent-soft);color:var(--ink)}
   .rung.from{background:var(--accent);border-color:var(--accent);color:#fff}
   .rung.to{background:var(--good);border-color:var(--good);color:#fff}
@@ -102,6 +106,7 @@
   .chain .step{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:3px 8px;color:var(--ink)}
   .chain .step.last{border-color:var(--good);font-weight:700}
   .chain .op{color:var(--muted);white-space:nowrap}
+  .moves{color:var(--ink);font-weight:600;margin:0 0 8px}
   .retype{margin-top:10px;font-weight:600;color:var(--ink)}
 
   /* toets-resultaat */
@@ -186,11 +191,11 @@
 
     <form id="q-form" autocomplete="off">
       <div class="question" id="question">
-        <span><span id="q-value"></span> <span class="unit" id="q-from"></span></span>
+        <span><span id="q-value"></span> <button type="button" class="unit" id="q-from"></button></span>
         <span>=</span>
         <span class="answer-row">
           <input id="answer" type="text" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Jouw antwoord">
-          <span class="unit" id="q-to"></span>
+          <button type="button" class="unit" id="q-to"></button>
         </span>
       </div>
       <div class="hint-small" id="input-hint"></div>
@@ -270,6 +275,17 @@ function shiftComma(str, n) {
   if (decimals <= 0) return canonical(digits + '0'.repeat(-decimals));
   const padded = digits.padStart(decimals + 1, '0');
   return canonical(padded.slice(0, -decimals) + ',' + padded.slice(-decimals));
+}
+
+const PREFIX_NAMES = ['kilo', 'hecto', 'deca', '', 'deci', 'centi', 'milli'];
+const BASE_NAMES = { m: 'meter', g: 'gram', L: 'liter', s: 'seconde' };
+const POWER_NAMES = { 1: '', 2: 'vierkante ', 3: 'kubieke ' };
+
+// "hm²" -> "vierkante hectometer"
+function unitName(sym) {
+  const u = UNITS[sym];
+  const f = FAMILIES[u.fam];
+  return POWER_NAMES[f.pow] + PREFIX_NAMES[u.idx] + BASE_NAMES[f.base];
 }
 
 function convert(value, fromSym, toSym) {
@@ -640,17 +656,6 @@ function showRight(result) {
   setTimeout(continuePractice, result.dotTip ? 2600 : 1100);
 }
 
-function hintText(hint) {
-  if (hint.type === 'direction') {
-    return 'Je hebt de komma de <b>verkeerde kant</b> op geschoven. Naar een kleinere eenheid wordt het getal groter, naar een grotere eenheid kleiner.';
-  }
-  if (hint.type === 'comma') {
-    const plaatsen = hint.places === 1 ? '1 plaats' : `${hint.places} plaatsen`;
-    return `De cijfers kloppen, maar de komma staat <b>${plaatsen} te ver naar ${hint.side}</b>.`;
-  }
-  return 'Er klopt iets niet aan de cijfers. Neem de cijfers van de som over en schuif alleen de komma.';
-}
-
 function showWrong(result) {
   const input = $('answer');
   input.className = 'wrong';
@@ -665,8 +670,7 @@ function showWrong(result) {
       <span>Jij:</span><span class="yours">${formatNL(result.given)} ${q.to}</span>
       <span>Goed:</span><span class="correct">${formatNL(q.answer)} ${q.to}</span>
     </div>
-    <div class="tip">${hintText(result.hint)}</div>
-    ${explanationHtml(q, false)}
+    ${movesHtml(q)}
     <div class="retype">Typ het goede antwoord over.</div>`;
 
   game.phase = 'retype';
@@ -689,15 +693,33 @@ function onRetype(raw) {
 
 /* ---------- uitleg ---------- */
 
+// Trap met begin (blauw), eind (groen) en een pijltje voor elke stap ertussen.
 function ladderHtml(seg) {
   const lo = Math.min(seg.a, seg.b), hi = Math.max(seg.a, seg.b);
+  const arrow = seg.b > seg.a ? '→' : '←';
   return '<div class="ladder">' + FAMILIES[seg.fam].units.map(u => {
     let cls = 'rung';
     if (u.idx === seg.a) cls += ' from';
     else if (u.idx === seg.b) cls += ' to';
     else if (u.idx > lo && u.idx < hi) cls += ' path';
-    return `<span class="${cls}">${u.sym}</span>`;
+    const step = u.idx > lo && u.idx <= hi ? `<span class="hop">${arrow}</span>` : '';
+    return `${step}<span class="${cls}">${u.sym}</span>`;
   }).join('') + '</div>';
+}
+
+// De hele trap met begin en eind, en eronder hoeveel stappen welke kant op.
+function movesHtml(q) {
+  return explainSteps(q).segments.map(seg => {
+    if (seg.bridge) return '<div class="moves">1 L = 1 dm³</div>';
+    if (seg.a === seg.b) return '';
+    const n = Math.abs(seg.b - seg.a);
+    const places = n * FAMILIES[seg.fam].pow;
+    const side = seg.b > seg.a ? 'rechts' : 'links';
+    const pow = FAMILIES[seg.fam].pow;
+    const why = pow > 1 ? ` (${pow === 2 ? '²' : '³'} = ${pow} per stap)` : '';
+    return ladderHtml(seg) +
+      `<div class="moves">${n} ${n === 1 ? 'stap' : 'stappen'} is ${places} ${places === 1 ? 'plaats' : 'plaatsen'} naar ${side}${why}</div>`;
+  }).join('');
 }
 
 function explanationHtml(q, withLadder = true) {
@@ -764,6 +786,13 @@ document.addEventListener('click', e => { if (!$('menu-list').contains(e.target)
 $('btn-again').onclick = startTest;
 $('btn-menu').onclick = showMenu;
 $('btn-hint').onclick = showHint;
+// Tik op een eenheid: toon de volledige naam onder de som.
+['q-from', 'q-to'].forEach(id => {
+  $(id).onclick = () => {
+    const sym = $(id).textContent;
+    $('input-hint').textContent = `${sym} = ${unitName(sym)}`;
+  };
+});
 $('btn-resume').onclick = resumeAfterPause;
 $('btn-reload').onclick = () => location.reload();
 $('q-form').addEventListener('submit', onSubmit);
