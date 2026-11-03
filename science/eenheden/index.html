@@ -360,12 +360,16 @@ function explainSteps(question) {
 
 /* ---------- sommen maken ---------- */
 
+// Elk niveau gebruikt alle soorten eenheden door elkaar. Moeilijker wordt het
+// door meer stappen (maxSteps), een grotere kommaverschuiving (maxShift) en
+// lastigere getallen.
+const ALL_KINDS = ['lengte', 'opp', 'kubiek', 'liter', 'massa', 'tijd', 'mixed'];
 const LEVELS = [
   null,
-  { name: 'Opwarmen', kinds: ['lengte', 'massa', 'liter'], maxSteps: 2, wholeNumbers: true },
-  { name: 'Kommagetallen', kinds: ['lengte', 'massa', 'liter'], maxSteps: 6, scales: [0, 3], maxInt: 9, maxDec: 6 },
-  { name: 'Kwadraat & kubus', kinds: ['opp', 'kubiek'], maxSteps: 3, scales: [0, 3], maxInt: 10, maxDec: 8 },
-  { name: 'Toetsniveau', kinds: ['lengte', 'massa', 'opp', 'kubiek', 'mixed', 'mixed', 'tijd'], maxSteps: 6, scales: [-6, 7], maxInt: 10, maxDec: 9 }
+  { name: 'Opwarmen', kinds: ALL_KINDS, maxSteps: 1, maxShift: 3, wholeNumbers: true },
+  { name: 'Kommagetallen', kinds: ALL_KINDS, maxSteps: 2, maxShift: 6, scales: [0, 2], maxInt: 9, maxDec: 6 },
+  { name: 'Meer stappen', kinds: ALL_KINDS, maxSteps: 3, maxShift: 9, scales: [0, 3], maxInt: 10, maxDec: 8 },
+  { name: 'Toetsniveau', kinds: ALL_KINDS, maxSteps: 6, maxShift: 12, scales: [-6, 7], maxInt: 10, maxDec: 9 }
 ];
 const MAX_LEVEL = LEVELS.length - 1;
 
@@ -418,6 +422,7 @@ function makeQuestion(level, kind) {
     const [from, to] = pickUnits(kind || pick(L.kinds), L.maxSteps);
     const value = L.wholeNumbers ? wholeValue(from, to) : randomValue(L.scales);
     const answer = convert(value, from.sym, to.sym);
+    if (Math.abs(from.exp - to.exp) > L.maxShift) continue;
     if (!L.wholeNumbers && !(fits(value, 9, 7) && fits(answer, L.maxInt, L.maxDec))) continue;
     return { level, value, from: from.sym, to: to.sym, answer, shift: from.exp - to.exp };
   }
