@@ -1,5 +1,5 @@
 // Service worker: eerst het netwerk (altijd de nieuwste versie), offline uit de cache.
-const CACHE = 'eenheden-v19';
+const CACHE = 'eenheden-v21';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon-180.png'];
 
 self.addEventListener('install', e => {

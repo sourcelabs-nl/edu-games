@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Eenheden omrekenen</title>
-<meta name="description" content="Oefen eenheden omrekenen: lengte, oppervlakte, inhoud, liters, massa en tijd.">
+<meta name="description" content="Oefen eenheden omrekenen: lengte, oppervlakte, inhoud, liters en massa.">
 <meta name="theme-color" content="#150a33">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -42,7 +42,7 @@
   /* knoppen */
   button{cursor:pointer;font:inherit;font-weight:600;border-radius:12px;padding:12px 18px;min-height:48px}
   .btn{background:var(--accent);color:#fff;border:1px solid var(--accent)}
-  .btn.alt{background:var(--accent2);color:#fff;border:1px solid var(--accent2)}
+  .btn.alt{background:var(--accent);color:#fff;border:1px solid var(--accent)}
   .btn.ghost{background:var(--panel);color:var(--ink);border:1px solid var(--border)}
   .btn.wide{width:100%}
 
@@ -98,9 +98,9 @@
   .ladder{display:flex;gap:4px;overflow-x:auto;padding:4px 0;margin:8px 0}
   .rung{flex:0 0 auto;min-width:40px;text-align:center;padding:5px 4px;border-radius:8px;background:var(--bg);border:1px solid var(--border);font-size:15px;color:var(--muted)}
   .ladder{align-items:center}
-  .hop{flex:0 0 auto;color:var(--accent);font-weight:800}
-  .rung.path{background:var(--accent-soft);color:var(--ink)}
-  .rung.from{background:var(--accent);border-color:var(--accent);color:#fff}
+  .hop{flex:0 0 auto;color:var(--accent2);font-weight:800}
+  .rung.path{background:#f3edff;color:var(--ink)}
+  .rung.from{background:var(--accent2);border-color:var(--accent2);color:#fff}
   .rung.to{background:var(--good);border-color:var(--good);color:#fff}
   .chain{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0;font-size:15px}
   .chain .step{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:3px 8px;color:var(--ink)}
@@ -243,16 +243,14 @@ const FAMILIES = {
   opp:    { base: 'm', pow: 2, offset: 0 },
   kubiek: { base: 'm', pow: 3, offset: 0 },
   liter:  { base: 'L', pow: 1, offset: -3 },
-  massa:  { base: 'g', pow: 1, offset: 0 },
-  tijd:   { base: 's', pow: 1, offset: 0, firstPrefix: 2 } // alleen das t/m ms
+  massa:  { base: 'g', pow: 1, offset: 0 }
 };
 
 const SUPERSCRIPT = { 1: '', 2: '²', 3: '³' };
 const UNITS = {};
 for (const [fam, f] of Object.entries(FAMILIES)) {
   f.units = PREFIXES
-    .map((pr, idx) => ({ sym: pr.p + f.base + SUPERSCRIPT[f.pow], fam, idx, exp: pr.e * f.pow + f.offset }))
-    .filter(u => u.idx >= (f.firstPrefix || 0));
+    .map((pr, idx) => ({ sym: pr.p + f.base + SUPERSCRIPT[f.pow], fam, idx, exp: pr.e * f.pow + f.offset }));
   f.units.forEach(u => { UNITS[u.sym] = u; });
 }
 
@@ -278,7 +276,7 @@ function shiftComma(str, n) {
 }
 
 const PREFIX_NAMES = ['kilo', 'hecto', 'deca', '', 'deci', 'centi', 'milli'];
-const BASE_NAMES = { m: 'meter', g: 'gram', L: 'liter', s: 'seconde' };
+const BASE_NAMES = { m: 'meter', g: 'gram', L: 'liter' };
 const POWER_NAMES = { 1: '', 2: 'vierkante ', 3: 'kubieke ' };
 
 // "hm²" -> "vierkante hectometer"
@@ -379,7 +377,7 @@ function explainSteps(question) {
 // Elk niveau gebruikt alle soorten eenheden door elkaar. Moeilijker wordt het
 // door meer stappen (maxSteps), een grotere kommaverschuiving (maxShift) en
 // lastigere getallen.
-const ALL_KINDS = ['lengte', 'opp', 'kubiek', 'liter', 'massa', 'tijd', 'mixed'];
+const ALL_KINDS = ['lengte', 'opp', 'kubiek', 'liter', 'massa', 'mixed'];
 const LEVELS = [
   null,
   { name: 'Opwarmen', kinds: ALL_KINDS, maxSteps: 1, maxShift: 3, wholeNumbers: true },
@@ -391,7 +389,7 @@ const MAX_LEVEL = LEVELS.length - 1;
 
 // Zelfde soort mix als de echte toets.
 const TEST_KINDS = ['lengte', 'kubiek', 'mixed', 'opp', 'massa', 'kubiek', 'lengte', 'massa',
-                    'opp', 'tijd', 'kubiek', 'lengte', 'mixed', 'kubiek', 'mixed'];
+                    'opp', 'liter', 'kubiek', 'lengte', 'mixed', 'kubiek', 'mixed'];
 
 const randInt = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
 const pick = list => list[randInt(0, list.length - 1)];
@@ -504,7 +502,6 @@ const FACTS = [
   'Een theelepel is ongeveer 5 mL.',
   'Een voetbalveld is ongeveer 0,7 hm². Een hm² heet ook wel een hectare.',
   'Een A4-blaadje is ongeveer 6 dm².',
-  'Een knipoog duurt ongeveer 1 tot 4 ds.',
   'Een olifant weegt ongeveer 5.000 kg.'
 ];
 
