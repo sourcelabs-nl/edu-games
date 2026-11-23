@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frans · Luistertoets unité 1 + 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+<style>
+  :root{--good:#1e9e55;--good-soft:#f0fdf4;--bad:#dc2626;--bad-soft:#fef2f2;--ink:#1b2a36;--accent:#3a86ff;--hi:#ffd166}
+  *{box-sizing:border-box;font-family:'Trebuchet MS','Segoe UI',system-ui,sans-serif}
+  body{margin:0;min-height:100vh;color:var(--ink);padding:16px;display:flex;justify-content:center;
+    background:radial-gradient(800px 600px at 15% 10%,rgba(58,134,255,.55),transparent 60%),
+      radial-gradient(800px 600px at 85% 90%,rgba(231,76,60,.45),transparent 60%),
+      linear-gradient(160deg,#150a33,#0a0420 70%)}
+  #app{width:100%;max-width:680px}
+  .hidden{display:none!important}
+  .hero{text-align:center;margin:6px 0 20px}
+  .kicker{letter-spacing:5px;color:var(--hi);text-transform:uppercase;font-size:13px}
+  .title{font-family:'Anton',Impact,sans-serif;font-style:italic;text-transform:uppercase;color:#fff;
+    font-size:clamp(36px,9vw,64px);margin:6px 0 0;line-height:1}
+  .back{color:#cfe3ff;text-decoration:none;font-size:14px}
+  .card{background:#fff;border-radius:20px;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+  h2{margin:0 0 14px;font-size:20px}
+  .choices{display:grid;gap:10px}
+  button{font-size:17px;border:0;border-radius:14px;padding:14px 16px;cursor:pointer;min-height:52px}
+  .btn{background:var(--accent);color:#fff;font-weight:bold}
+  .opt{background:#eef3fb;color:var(--ink);text-align:left}
+  .opt.good{background:var(--good-soft);box-shadow:inset 0 0 0 2px var(--good)}
+  .opt.bad{background:var(--bad-soft);box-shadow:inset 0 0 0 2px var(--bad)}
+  .opt:disabled{cursor:default}
+  .play{width:100%;background:var(--hi);color:var(--ink);font-weight:bold;font-size:20px;margin-bottom:16px}
+  .meta{display:flex;justify-content:space-between;color:#667;font-size:14px;margin-bottom:10px}
+  .instr{font-weight:bold;margin-bottom:12px}
+  /* feedback, gelijk aan science/eenheden */
+  .feedback{margin-top:16px;border-radius:12px;padding:14px 16px;line-height:1.5}
+  .feedback.good{background:var(--good-soft);border:1px solid var(--good)}
+  .feedback.bad{background:var(--bad-soft);border:1px solid var(--bad)}
+  .fb-head{font-size:17px;font-weight:700;margin-bottom:4px}
+  .good .fb-head{color:var(--good)}
+  .bad .fb-head{color:var(--bad)}
+  .compare{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:baseline;margin:6px 0 10px}
+  .compare .yours{text-decoration:line-through;color:var(--bad)}
+  .compare .correct{color:var(--good);font-weight:700;font-size:17px}
+  .heard{font-style:italic}
+  .next{margin-top:14px;width:100%}
+  .score{font-size:48px;font-weight:bold;text-align:center;margin:10px 0}
+  .credit{color:#cfe3ff;font-size:12px;text-align:center;opacity:.7}
+  .warn{background:#fff3cd;padding:10px;border-radius:10px;font-size:14px;margin-bottom:12px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="hero">
+    <a class="back" href="../../">← alle games</a>
+    <div class="kicker">Frans · 1 havo</div>
+    <h1 class="title">Luistertoets</h1>
+  </div>
+
+  <div id="menu" class="card">
+    <div id="noVoice" class="warn hidden">Er is geen Franse stem gevonden op dit apparaat. De uitspraak kan afwijken.</div>
+    <h2>Kies wat je wilt oefenen</h2>
+    <div class="choices">
+      <button class="btn" data-unite="1">Unité 1 · Bonjour !</button>
+      <button class="btn" data-unite="2">Unité 2 · La famille</button>
+      <button class="btn" data-unite="all">Unité 1 + 2</button>
+    </div>
+  </div>
+
+  <div id="intro" class="card hidden">
+    <h2>Klaar om te luisteren?</h2>
+    <p>Je krijgt <strong id="introCount"></strong> vragen. Bij elke vraag hoor je een Frans woord of zinnetje. Kies daarna het goede antwoord.</p>
+    <p>🔊 Zet je geluid aan. Met de knop <strong>Luister</strong> hoor je het nog een keer.</p>
+    <button class="btn next" id="begin">Begin</button>
+  </div>
+
+  <div id="quiz" class="card hidden">
+    <div class="meta"><span id="progress"></span><span id="points"></span></div>
+    <button class="play" id="play">🔊 Luister</button>
+    <div class="instr" id="instr"></div>
+    <div class="choices" id="options"></div>
+    <button class="btn next hidden" id="next">Verder</button>
+    <div class="feedback hidden" id="feedback"></div>
+  </div>
+
+  <p class="credit">Stemmen: Voxtral TTS (Mistral AI), CC BY-NC 4.0</p>
+
+  <div id="result" class="card hidden">
+    <h2>Klaar!</h2>
+    <div class="score" id="score"></div>
+    <button class="btn next" id="again">Opnieuw</button>
+  </div>
+</div>
+
+<script>
+/* Vragen per unité. `audio` is een lijst zinnen die na elkaar worden uitgesproken.
+   `answer` is de index van het juiste antwoord in `options`. */
+const QUESTIONS = [
+  { id:"u1-quartier", voice:"f", unite:1, instr:"Welk woord hoor je?", audio:["le quartier"],
+    options:["de straat","de wijk","de stad","de school"], answer:1 },
+  { id:"u1-habites", voice:"m", unite:1, instr:"Wat vraagt Romain?", audio:["Tu habites où ?"],
+    options:["Hoe heet je?","In welke klas zit je?","Waar woon je?","Hoe gaat het?"], answer:2 },
+  { id:"u1-lyon", voice:"f", unite:1, instr:"Wat hoor je?",
+    audio:["Je m'appelle Clémence. J'habite à Lyon."],
+    options:["Jij heet Clémence. Jij woont in Lyon.","Ik heet Clémence. Ik ben in Lyon.","Ik heet Clémence. Ik woon in Parijs.","Ik heet Clémence. Ik woon in Lyon."], answer:3 },
+  { id:"u1-elles-sont", voice:"f", unite:1, instr:"Welke vorm hoor je?", audio:["Elles sont au collège."],
+    options:["il est","ils sont","elles sont","elle est"], answer:2 },
+  { id:"u2-quinze", voice:"m", unite:2, instr:"Welk getal hoor je?", audio:["quinze"],
+    options:["4","5","14","15"], answer:3 },
+  { id:"u2-deux-soeurs", voice:"f", unite:2, instr:"Wat hoor je?",
+    audio:["J'ai un frère et deux sœurs."],
+    options:["Ik heb een broer en drie zussen.","Ik heb twee broers en een zus.","Ik heb een broer en twee zussen.","Ik heb geen broers en twee zussen."], answer:2 },
+  { id:"u2-oncle", voice:"m", unite:2, instr:"Wat hoor je?", audio:["C'est mon oncle."],
+    options:["Het is mijn opa.","Het is mijn tante.","Het is mijn neef.","Het is mijn oom."], answer:3 },
+  { id:"u2-ma-soeur", voice:"f", unite:2, instr:"Wat hoor je?", audio:["Voilà ma sœur."],
+    options:["Daar is mijn zus.","Daar is zijn zus.","Daar is mijn broer.","Daar zijn mijn zussen."], answer:0 },
+  { id:"u2-treize", voice:"m", unite:2, instr:"Wat hoor je?",
+    audio:["Je m'appelle Ousmane. J'ai treize ans."],
+    options:["Ik heet Ousmane. Ik ben dertig jaar.","Ik heet Ousmane. Ik heb drie broers.","Ik heet Ousmane. Ik ben twaalf jaar.","Ik heet Ousmane. Ik ben dertien jaar."], answer:3 },
+  { id:"u1-bonjour", voice:"f", unite:1, instr:"Welk woord hoor je?", audio:["Bonjour !"],
+    options:["dag","tot ziens","bedankt","hoi"], answer:0 },
+  { id:"u1-au-revoir", voice:"m", unite:1, instr:"Welk woord hoor je?", audio:["Au revoir !"],
+    options:["tot ziens","tot later","dag","bedankt"], answer:0 },
+  { id:"u1-merci", voice:"f", unite:1, instr:"Welk woord hoor je?", audio:["Merci !"],
+    options:["bedankt","ja","nee","meneer"], answer:0 },
+  { id:"u1-ca-va", voice:"m", unite:1, instr:"Wat hoor je?", audio:["Salut ! Ça va ?"],
+    options:["Hoi! Hoe gaat het?","Hoi! Hoe heet je?","Hoi! Waar woon je?","Hoi! Wie is dat?"], answer:0 },
+  { id:"u1-ca-va-bien", voice:"f", unite:1, instr:"Wat hoor je?", audio:["Ça va bien, merci."],
+    options:["Het gaat goed, bedankt.","Het gaat niet goed, bedankt.","Het is leuk, bedankt.","Tot later, bedankt."], answer:0 },
+  { id:"u1-garcon", voice:"m", unite:1, instr:"Welk woord hoor je?", audio:["le garçon"],
+    options:["de jongen","het meisje","de vriend","de klas"], answer:0 },
+  { id:"u1-fille", voice:"f", unite:1, instr:"Welk woord hoor je?", audio:["la fille"],
+    options:["het meisje","de jongen","de vriendin","de stad"], answer:0 },
+  { id:"u1-rue", voice:"m", unite:1, instr:"Welk woord hoor je?", audio:["la rue"],
+    options:["de straat","de stad","de wijk","het land"], answer:0 },
+  { id:"u1-ville", voice:"f", unite:1, instr:"Welk woord hoor je?", audio:["la ville"],
+    options:["de stad","de straat","het dorp","de school"], answer:0 },
+  { id:"u1-maison", voice:"m", unite:1, instr:"Welk woord hoor je?", audio:["la maison"],
+    options:["het huis","de tuin","het appartement","het zwembad"], answer:0 },
+  { id:"u1-piscine", voice:"f", unite:1, instr:"Welk woord hoor je?", audio:["la piscine"],
+    options:["het zwembad","de school","de tuin","de zee"], answer:0 },
+  { id:"u1-mer", voice:"m", unite:1, instr:"Welk woord hoor je?", audio:["la mer"],
+    options:["de zee","de moeder","het zwembad","de stad"], answer:0 },
+  { id:"u1-comment", voice:"f", unite:1, instr:"Wat hoor je?", audio:["Comment tu t'appelles ?"],
+    options:["Hoe heet je?","Waar woon je?","Hoe gaat het?","In welke klas zit je?"], answer:0 },
+  { id:"u1-thomas", voice:"m", unite:1, instr:"Wat hoor je?", audio:["Je m'appelle Thomas."],
+    options:["Ik heet Thomas.","Hij heet Thomas.","Jij heet Thomas.","Ik ben Thomas niet."], answer:0 },
+  { id:"u1-quelle-classe", voice:"f", unite:1, instr:"Wat hoor je?", audio:["Tu es en quelle classe ?"],
+    options:["In welke klas zit je?","Hoe heet je?","Waar woon je?","Hoe oud ben je?"], answer:0 },
+  { id:"u1-sixieme", voice:"m", unite:1, instr:"Wat hoor je?", audio:["Je suis en sixième."],
+    options:["Ik zit in de brugklas.","Ik ben zes jaar.","Ik woon op nummer zes.","Ik zit in de tweede klas."], answer:0 },
+  { id:"u1-paris", voice:"f", unite:1, instr:"Wat hoor je?", audio:["J'habite à Paris."],
+    options:["Ik woon in Parijs.","Ik werk in Parijs.","Ik woon in Lyon.","Hij woont in Parijs."], answer:0 },
+  { id:"u1-neerlandais", voice:"m", unite:1, instr:"Wat hoor je?", audio:["Tu es néerlandais ?"],
+    options:["Ben je Nederlands?","Ben je Frans?","Spreek je Nederlands?","Woon je in Nederland?"], answer:0 },
+  { id:"u1-francaise", voice:"f", unite:1, instr:"Wat hoor je?", audio:["Non, je suis française."],
+    options:["Nee, ik ben Frans.","Ja, ik ben Frans.","Nee, ik ben Nederlands.","Nee, ik woon in Frankrijk."], answer:0 },
+  { id:"u1-appartement", voice:"m", unite:1, instr:"Wat hoor je?", audio:["J'habite dans un appartement."],
+    options:["Ik woon in een appartement.","Ik woon in een huis.","Ik woon in een dorp.","Ik woon in een stad."], answer:0 },
+  { id:"u1-dix-minutes", voice:"f", unite:1, instr:"Wat hoor je?", audio:["Le collège est à dix minutes."],
+    options:["De middelbare school is op tien minuten afstand.","De middelbare school is op twee minuten afstand.","De basisschool is op tien minuten afstand.","Het zwembad is op tien minuten afstand."], answer:0 },
+  { id:"u1-village", voice:"m", unite:1, instr:"Wat hoor je?", audio:["C'est un village."],
+    options:["Het is een dorp.","Het is een stad.","Het is een wijk.","Het is een straat."], answer:0 },
+  { id:"u1-foot", voice:"f", unite:1, instr:"Wat hoor je?", audio:["J'aime le foot."],
+    options:["Ik hou van voetbal.","Ik hou van tennis.","Ik speel geen voetbal.","Hij houdt van voetbal."], answer:0 },
+  { id:"u1-il-y-a", voice:"m", unite:1, instr:"Wat hoor je?", audio:["Il y a une piscine."],
+    options:["Er is een zwembad.","Hier is een zwembad.","Het is een zwembad.","Er is geen zwembad."], answer:0 },
+  { id:"u1-voila", voice:"f", unite:1, instr:"Wat hoor je?", audio:["Voilà mon ami."],
+    options:["Daar is mijn vriend.","Hier is mijn vriend.","Dat is mijn vriendin.","Daar is mijn broer."], answer:0 },
+  { id:"u1-sympa", voice:"m", unite:1, instr:"Wat hoor je?", audio:["Il est très sympa."],
+    options:["Hij is erg aardig.","Zij is erg aardig.","Hij is erg sportief.","Hij is niet aardig."], answer:0 },
+  { id:"u1-loin", voice:"f", unite:1, instr:"Wat hoor je?", audio:["Le collège est loin."],
+    options:["De middelbare school is ver.","De middelbare school is dichtbij.","De middelbare school is groot.","De middelbare school is mooi."], answer:0 },
+  { id:"u1-ecoute", voice:"m", unite:1, instr:"Wat hoor je?", audio:["Écoute le dialogue."],
+    options:["Luister naar de dialoog.","Lees de tekst.","Bekijk de film.","Schrijf een e-mail."], answer:0 },
+  { id:"u1-lis", voice:"f", unite:1, instr:"Wat hoor je?", audio:["Lis le texte."],
+    options:["Lees de tekst.","Luister naar de tekst.","Schrijf de tekst.","Bekijk de film."], answer:0 },
+  { id:"u1-reponds", voice:"m", unite:1, instr:"Wat hoor je?", audio:["Réponds aux questions."],
+    options:["Beantwoord de vragen.","Vul de zinnen aan.","Lees de vragen.","Werk samen."], answer:0 },
+  { id:"u1-nous-sommes", voice:"f", unite:1, instr:"Welke vorm hoor je?", audio:["Nous sommes au collège."],
+    options:["nous sommes","vous êtes","ils sont","on est"], answer:0 },
+  { id:"u1-tu-es", voice:"m", unite:1, instr:"Welke vorm hoor je?", audio:["Tu es en sixième ?"],
+    options:["tu es","il est","je suis","vous êtes"], answer:0 },
+  { id:"u1-vous-etes", voice:"f", unite:1, instr:"Welke vorm hoor je?", audio:["Vous êtes français ?"],
+    options:["vous êtes","nous sommes","tu es","ils sont"], answer:0 },
+  { id:"u1-une-fille", voice:"m", unite:1, instr:"Welke vorm hoor je?", audio:["C'est une fille."],
+    options:["une","un","la","des"], answer:0 },
+  { id:"u1-des-amis", voice:"f", unite:1, instr:"Welke vorm hoor je?", audio:["Ce sont des amis."],
+    options:["des","les","un","une"], answer:0 },
+  { id:"u1-l-ecole", voice:"m", unite:1, instr:"Welke vorm hoor je?", audio:["Voilà l'école."],
+    options:["l'","le","la","les"], answer:0 },
+  { id:"u2-pere", voice:"f", unite:2, instr:"Welk woord hoor je?", audio:["le père"],
+    options:["de vader","de moeder","de broer","de opa"], answer:0 },
+  { id:"u2-mere", voice:"m", unite:2, instr:"Welk woord hoor je?", audio:["la mère"],
+    options:["de moeder","de zee","de zus","de oma"], answer:0 },
+  { id:"u2-frere", voice:"f", unite:2, instr:"Welk woord hoor je?", audio:["le frère"],
+    options:["de broer","de vader","de neef","de zus"], answer:0 },
+  { id:"u2-tante", voice:"m", unite:2, instr:"Welk woord hoor je?", audio:["la tante"],
+    options:["de tante","de oom","de nicht","de oma"], answer:0 },
+  { id:"u2-grand-pere", voice:"f", unite:2, instr:"Welk woord hoor je?", audio:["le grand-père"],
+    options:["de opa","de oma","de vader","de oom"], answer:0 },
+  { id:"u2-cousine", voice:"m", unite:2, instr:"Welk woord hoor je?", audio:["la cousine"],
+    options:["de nicht","de neef","de tante","de zus"], answer:0 },
+  { id:"u2-parents", voice:"f", unite:2, instr:"Welk woord hoor je?", audio:["les parents"],
+    options:["de ouders","de grootouders","de broers","de vrienden"], answer:0 },
+  { id:"u2-jumeaux", voice:"m", unite:2, instr:"Welk woord hoor je?", audio:["les jumeaux"],
+    options:["de tweeling","de ouders","de kinderen","de vrienden"], answer:0 },
+  { id:"u2-chien", voice:"f", unite:2, instr:"Welk woord hoor je?", audio:["le chien"],
+    options:["de hond","de kat","het dier","het kind"], answer:0 },
+  { id:"u2-chat", voice:"m", unite:2, instr:"Welk woord hoor je?", audio:["le chat"],
+    options:["de kat","de hond","het dier","de buurman"], answer:0 },
+  { id:"u2-anniversaire", voice:"f", unite:2, instr:"Welk woord hoor je?", audio:["l'anniversaire"],
+    options:["de verjaardag","het feest","de uitnodiging","de vakantie"], answer:0 },
+  { id:"u2-gateau", voice:"m", unite:2, instr:"Welk woord hoor je?", audio:["le gâteau"],
+    options:["de taart","de tafel","de bloem","de foto"], answer:0 },
+  { id:"u2-voisine", voice:"f", unite:2, instr:"Welk woord hoor je?", audio:["la voisine"],
+    options:["de buurvrouw","de buurman","de vriendin","de nicht"], answer:0 },
+  { id:"u2-quel-age", voice:"m", unite:2, instr:"Wat hoor je?", audio:["Tu as quel âge ?"],
+    options:["Hoe oud ben je?","Hoe heet je?","Waar woon je?","Heb je broers en zussen?"], answer:0 },
+  { id:"u2-freres-soeurs", voice:"f", unite:2, instr:"Wat hoor je?", audio:["Tu as des frères et des sœurs ?"],
+    options:["Heb je broers en zussen?","Heb je ooms en tantes?","Hoe oud ben je?","Heb je een hond?"], answer:0 },
+  { id:"u2-fille-unique", voice:"m", unite:2, instr:"Wat hoor je?", audio:["Je suis fille unique."],
+    options:["Ik ben enig kind.","Ik ben alleen.","Ik ben een tweeling.","Ik heb een zus."], answer:0 },
+  { id:"u2-meilleur-ami", voice:"f", unite:2, instr:"Wat hoor je?", audio:["C'est mon meilleur ami."],
+    options:["Het is mijn beste vriend.","Het is mijn beste vriendin.","Het is mijn broer.","Het is zijn beste vriend."], answer:0 },
+  { id:"u2-photo", voice:"m", unite:2, instr:"Wat hoor je?", audio:["Voici une photo de vacances."],
+    options:["Hier is een vakantiefoto.","Daar is een vakantiefoto.","Hier is een verjaardagsfoto.","Hier is een familiefoto."], answer:0 },
+  { id:"u2-gentils", voice:"f", unite:2, instr:"Wat hoor je?", audio:["Mes parents sont très gentils."],
+    options:["Mijn ouders zijn erg aardig.","Mijn ouders zijn erg grappig.","Zijn ouders zijn erg aardig.","Mijn grootouders zijn erg aardig."], answer:0 },
+  { id:"u2-ma-cousine", voice:"m", unite:2, instr:"Wat hoor je?", audio:["Ma cousine est ma meilleure amie."],
+    options:["Mijn nicht is mijn beste vriendin.","Mijn tante is mijn beste vriendin.","Mijn zus is mijn beste vriendin.","Mijn neef is mijn beste vriend."], answer:0 },
+  { id:"u2-dix-ans", voice:"f", unite:2, instr:"Wat hoor je?", audio:["Nous sommes amis depuis dix ans."],
+    options:["Wij zijn sinds tien jaar vrienden.","Wij zijn sinds twee jaar vrienden.","Wij zijn tien jaar oud.","Wij zijn met zijn tienen."], answer:0 },
+  { id:"u2-tante-preferee", voice:"m", unite:2, instr:"Wat hoor je?", audio:["C'est ma tante préférée."],
+    options:["Dat is mijn lievelingstante.","Dat is mijn lievelingsoom.","Dat is mijn oma.","Dat is haar tante."], answer:0 },
+  { id:"u2-cinq", voice:"f", unite:2, instr:"Wat hoor je?", audio:["Nous sommes cinq."],
+    options:["Wij zijn met zijn vijven.","Wij zijn met zijn zessen.","Wij zijn vijf jaar.","Wij hebben vijf katten."], answer:0 },
+  { id:"u2-divorces", voice:"m", unite:2, instr:"Wat hoor je?", audio:["Mes parents sont divorcés."],
+    options:["Mijn ouders zijn gescheiden.","Mijn ouders zijn getrouwd.","Mijn ouders zijn aardig.","Mijn grootouders zijn gescheiden."], answer:0 },
+  { id:"u2-demi-frere", voice:"f", unite:2, instr:"Wat hoor je?", audio:["J'ai un demi-frère."],
+    options:["Ik heb een halfbroer.","Ik heb een broer.","Ik heb een halfzus.","Ik heb een neef."], answer:0 },
+  { id:"u2-fete", voice:"m", unite:2, instr:"Wat hoor je?", audio:["Demain, c'est la fête !"],
+    options:["Morgen is het feest!","Vandaag is het feest!","Morgen is mijn verjaardag!","Morgen is het vakantie!"], answer:0 },
+  { id:"u2-sa-soeur", voice:"f", unite:2, instr:"Wat hoor je?", audio:["Voilà Lisa avec sa sœur."],
+    options:["Daar is Lisa met haar zus.","Daar is Lisa met haar broer.","Daar is Lisa met mijn zus.","Hier is Lisa met haar zus."], answer:0 },
+  { id:"u2-ses-parents", voice:"m", unite:2, instr:"Welke vorm hoor je?", audio:["Voilà ses parents."],
+    options:["ses","mes","tes","sa"], answer:0 },
+  { id:"u2-ton-frere", voice:"f", unite:2, instr:"Welke vorm hoor je?", audio:["C'est ton frère ?"],
+    options:["ton","mon","son","ta"], answer:0 },
+  { id:"u2-mon-adresse", voice:"m", unite:2, instr:"Welke vorm hoor je?", audio:["Voilà mon adresse."],
+    options:["mon","ma","mes","ton"], answer:0 },
+  { id:"u2-nous-avons", voice:"f", unite:2, instr:"Welke vorm hoor je?", audio:["Nous avons un chien."],
+    options:["nous avons","vous avez","ils ont","on a"], answer:0 },
+  { id:"u2-ils-ont", voice:"m", unite:2, instr:"Welke vorm hoor je?", audio:["Ils ont un chat."],
+    options:["ils ont","il a","elles ont","ils sont"], answer:0 },
+  { id:"u2-tu-as", voice:"f", unite:2, instr:"Welke vorm hoor je?", audio:["Tu as un frère ?"],
+    options:["tu as","tu es","il a","j'ai"], answer:0 },
+  { id:"u2-douze", voice:"m", unite:2, instr:"Welk getal hoor je?", audio:["douze"],
+    options:["12","2","11","13"], answer:0 },
+  { id:"u2-seize", voice:"f", unite:2, instr:"Welk getal hoor je?", audio:["seize"],
+    options:["16","6","15","17"], answer:0 },
+  { id:"u2-dix-sept", voice:"m", unite:2, instr:"Welk getal hoor je?", audio:["dix-sept"],
+    options:["17","7","16","10"], answer:0 },
+  { id:"u2-onze", voice:"f", unite:2, instr:"Welk getal hoor je?", audio:["onze"],
+    options:["11","1","12","15"], answer:0 },
+  { id:"u2-vingt", voice:"m", unite:2, instr:"Welk getal hoor je?", audio:["vingt"],
+    options:["20","2","12","10"], answer:0 },
+  { id:"u2-trois", voice:"f", unite:2, instr:"Welk getal hoor je?", audio:["trois"],
+    options:["3","13","2","4"], answer:0 },
+  { id:"u2-six", voice:"m", unite:2, instr:"Welk getal hoor je?", audio:["six"],
+    options:["6","16","10","7"], answer:0 },
+  { id:"u2-dix-neuf", voice:"f", unite:2, instr:"Welk getal hoor je?", audio:["dix-neuf"],
+    options:["19","9","18","10"], answer:0 },
+  { id:"u2-quatorze", voice:"m", unite:2, instr:"Welk getal hoor je?", audio:["quatorze"],
+    options:["14","4","40","15"], answer:0 },
+  { id:"u2-huit", voice:"f", unite:2, instr:"Welk getal hoor je?", audio:["huit"],
+    options:["8","18","9","11"], answer:0 }
+];
+
+const $ = id => document.getElementById(id);
+let voice = null;
+let round = [];
+let index = 0;
+let points = 0;
+
+function pickFrenchVoice(){
+  const voices = speechSynthesis.getVoices();
+  voice = voices.find(v => v.lang === "fr-FR") || voices.find(v => v.lang.startsWith("fr")) || null;
+  $("noVoice").classList.toggle("hidden", !!voice || voices.length === 0);
+}
+speechSynthesis.onvoiceschanged = pickFrenchVoice;
+pickFrenchVoice();
+
+/* Speelt audio/<id>.mp3 af (gemaakt met tools/genereer-audio.py).
+   Lukt dat niet, dan valt de game terug op de stem van de browser. */
+let player = null;
+function play(q){
+  if (player) player.pause();
+  speechSynthesis.cancel();
+  player = new Audio(`audio/${q.id}.mp3`);
+  player.play().catch(() => speak(q.audio));
+}
+
+function speak(lines){
+  speechSynthesis.cancel();
+  for (const line of lines){
+    const u = new SpeechSynthesisUtterance(line);
+    u.lang = "fr-FR";
+    u.rate = 0.85;
+    if (voice) u.voice = voice;
+    speechSynthesis.speak(u);
+  }
+}
+
+function shuffle(list){
+  return list.map(x => [Math.random(), x]).sort((a,b) => a[0]-b[0]).map(p => p[1]);
+}
+
+function start(unite){
+  round = shuffle(QUESTIONS.filter(q => unite === "all" || q.unite === Number(unite)));
+  index = 0; points = 0;
+  $("menu").classList.add("hidden");
+  $("result").classList.add("hidden");
+  $("introCount").textContent = round.length;
+  $("intro").classList.remove("hidden");
+}
+
+function begin(){
+  $("intro").classList.add("hidden");
+  $("quiz").classList.remove("hidden");
+  showQuestion();
+}
+
+function showQuestion(){
+  const q = round[index];
+  $("progress").textContent = `Vraag ${index+1} van ${round.length}`;
+  $("points").textContent = `${points} goed`;
+  $("instr").textContent = q.instr;
+  $("feedback").className = "feedback hidden";
+  $("next").classList.add("hidden");
+  const box = $("options");
+  box.innerHTML = "";
+  // Antwoorden in willekeurige volgorde; data-i bewaart de index in q.options.
+  shuffle(q.options.map((text, i) => ({ text, i }))).forEach(({ text, i }) => {
+    const b = document.createElement("button");
+    b.className = "opt";
+    b.textContent = text;
+    b.dataset.i = i;
+    b.onclick = () => choose(i);
+    box.appendChild(b);
+  });
+  play(q);
+}
+
+function choose(i){
+  const q = round[index];
+  const buttons = [...$("options").children];
+  const button = idx => buttons.find(b => Number(b.dataset.i) === idx);
+  buttons.forEach(b => b.disabled = true);
+  button(q.answer).classList.add("good");
+  if (i === q.answer) points++;
+  else button(i).classList.add("bad");
+  $("points").textContent = `${points} goed`;
+  showFeedback(q, i);
+  $("next").classList.remove("hidden");
+}
+
+function escapeHtml(text){
+  return text.replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" })[c]);
+}
+
+function showFeedback(q, chosen){
+  const fb = $("feedback");
+  const heard = `<div class="heard">Je hoorde: 🔊 ${escapeHtml(q.audio.join(" "))}</div>`;
+  if (chosen === q.answer){
+    fb.className = "feedback good";
+    fb.innerHTML = `<div class="fb-head">Goed</div>${heard}`;
+    return;
+  }
+  fb.className = "feedback bad";
+  fb.innerHTML = `
+    <div class="fb-head">Niet goed</div>
+    <div class="compare">
+      <span>Jij:</span><span class="yours">${escapeHtml(q.options[chosen])}</span>
+      <span>Goed:</span><span class="correct">${escapeHtml(q.options[q.answer])}</span>
+    </div>
+    ${heard}`;
+}
+
+function next(){
+  index++;
+  if (index < round.length) return showQuestion();
+  $("quiz").classList.add("hidden");
+  $("result").classList.remove("hidden");
+  $("score").textContent = `${points} / ${round.length}`;
+}
+
+document.querySelectorAll("[data-unite]").forEach(b => b.onclick = () => start(b.dataset.unite));
+$("play").onclick = () => play(round[index]);
+$("next").onclick = next;
+$("begin").onclick = begin;
+$("again").onclick = () => { $("result").classList.add("hidden"); $("menu").classList.remove("hidden"); };
+</script>
+</body>
+</html>
