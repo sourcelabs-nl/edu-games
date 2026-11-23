@@ -3,23 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Luister naar Frans uit unité 1 + 2 en kies het goede antwoord.">
+<meta name="theme-color" content="#150a33">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Luistertoets">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Frans · Luistertoets unité 1 + 2</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
 <style>
   :root{--good:#1e9e55;--good-soft:#f0fdf4;--bad:#dc2626;--bad-soft:#fef2f2;--ink:#1b2a36;--accent:#3a86ff;--hi:#ffd166}
-  *{box-sizing:border-box;font-family:'Trebuchet MS','Segoe UI',system-ui,sans-serif}
+  *{box-sizing:border-box;font-family:system-ui,'Segoe UI',Roboto,sans-serif}
   body{margin:0;min-height:100vh;color:var(--ink);padding:16px;display:flex;justify-content:center;
     background:radial-gradient(800px 600px at 15% 10%,rgba(58,134,255,.55),transparent 60%),
       radial-gradient(800px 600px at 85% 90%,rgba(231,76,60,.45),transparent 60%),
       linear-gradient(160deg,#150a33,#0a0420 70%)}
-  #app{width:100%;max-width:680px}
+  #app{width:100%;max-width:560px}
   .hidden{display:none!important}
-  .hero{text-align:center;margin:6px 0 20px}
-  .kicker{letter-spacing:5px;color:var(--hi);text-transform:uppercase;font-size:13px}
-  .title{font-family:'Anton',Impact,sans-serif;font-style:italic;text-transform:uppercase;color:#fff;
-    font-size:clamp(36px,9vw,64px);margin:6px 0 0;line-height:1}
-  .back{color:#cfe3ff;text-decoration:none;font-size:14px}
+  #toast{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:7;
+    background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:8px 8px 8px 16px;box-shadow:0 8px 24px rgba(15,23,42,.15);
+    display:flex;align-items:center;gap:12px;color:var(--ink);width:max-content;max-width:92vw}
+  #toast .btn{min-height:40px;padding:6px 14px}
+  /* kop, gelijk aan science/eenheden */
+  .hero{margin:4px 0 16px;display:flex;align-items:center;gap:12px;position:relative}
+  .hero > div{flex:1}
+  .menu-btn{background:none;border:1px solid rgba(255,255,255,.35);color:#fff;width:48px;min-height:48px;padding:0;display:flex;align-items:center;justify-content:center}
+  .menu-list{position:absolute;right:0;top:56px;z-index:8;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 8px 24px rgba(15,23,42,.15);padding:6px;min-width:180px}
+  .menu-list button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--ink);font-weight:400;min-height:48px}
+  .kicker{color:#ffd166;font-size:15px}
+  .title{color:#fff;font-size:clamp(24px,6.5vw,32px);font-weight:700;margin:2px 0 0}
   .card{background:#fff;border-radius:20px;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.35)}
   h2{margin:0 0 14px;font-size:20px}
   .choices{display:grid;gap:10px}
@@ -50,12 +64,20 @@
 </style>
 </head>
 <body>
+<div id="toast" class="hidden">Er is een nieuwe versie <button class="btn" id="btn-reload">Vernieuwen</button></div>
+
 <div id="app">
-  <div class="hero">
-    <a class="back" href="../../">← alle games</a>
-    <div class="kicker">Frans · 1 havo</div>
-    <h1 class="title">Luistertoets</h1>
-  </div>
+  <header class="hero">
+    <div>
+      <div class="kicker">Frans · 1 havo</div>
+      <h1 class="title">Luistertoets unité 1 + 2</h1>
+    </div>
+    <button class="menu-btn" id="btn-hamburger" type="button" aria-label="Menu" aria-expanded="false"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <div class="menu-list hidden" id="menu-list">
+      <button type="button" id="btn-stop" class="hidden">Stoppen</button>
+      <button type="button" onclick="location.href='../../'">Alle games</button>
+    </div>
+  </header>
 
   <div id="menu" class="card">
     <div id="noVoice" class="warn hidden">Er is geen Franse stem gevonden op dit apparaat. De uitspraak kan afwijken.</div>
@@ -322,6 +344,7 @@ function start(unite){
   $("menu").classList.add("hidden");
   $("result").classList.add("hidden");
   $("introCount").textContent = round.length;
+  $("btn-stop").classList.remove("hidden");
   $("intro").classList.remove("hidden");
 }
 
@@ -399,7 +422,41 @@ document.querySelectorAll("[data-unite]").forEach(b => b.onclick = () => start(b
 $("play").onclick = () => play(round[index]);
 $("next").onclick = next;
 $("begin").onclick = begin;
-$("again").onclick = () => { $("result").classList.add("hidden"); $("menu").classList.remove("hidden"); };
+function showMenu(){
+  if (player) player.pause();
+  speechSynthesis.cancel();
+  ["intro","quiz","result"].forEach(id => $(id).classList.add("hidden"));
+  $("menu").classList.remove("hidden");
+  $("btn-stop").classList.add("hidden");
+  toggleMenu(false);
+}
+
+function toggleMenu(open = $("menu-list").classList.contains("hidden")){
+  $("menu-list").classList.toggle("hidden", !open);
+  $("btn-hamburger").setAttribute("aria-expanded", String(open));
+}
+
+$("again").onclick = showMenu;
+$("btn-stop").onclick = showMenu;
+$("btn-hamburger").onclick = e => { e.stopPropagation(); toggleMenu(); };
+document.addEventListener("click", e => { if (!$("menu-list").contains(e.target)) toggleMenu(false); });
+$("btn-reload").onclick = () => location.reload();
+
+// Service worker: offline spelen, en een melding als er een nieuwe versie is.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").then(reg => {
+      reg.addEventListener("updatefound", () => {
+        const worker = reg.installing;
+        worker.addEventListener("statechange", () => {
+          if (worker.state === "installed" && navigator.serviceWorker.controller) {
+            $("toast").classList.remove("hidden");
+          }
+        });
+      });
+    }).catch(() => {});
+  });
+}
 </script>
 </body>
 </html>

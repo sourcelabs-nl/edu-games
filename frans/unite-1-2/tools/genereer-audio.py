@@ -93,12 +93,20 @@ def main():
             and (regenerate_all or not (AUDIO_DIR / f"{q['id']}.mp3").exists())]
     if not todo:
         print("Alle audio is er al.")
+        write_audio_list()
         return
     model = load(MODEL)
     for question in todo:
         target = AUDIO_DIR / f"{question['id']}.mp3"
         save_mp3(render_question(model, question), target, TEMPO[question["voice"]])
         print("ok", target.name)
+    write_audio_list()
+
+
+def write_audio_list():
+    """audio/lijst.json: de service worker slaat deze MP3's op voor offline gebruik."""
+    names = sorted(p.name for p in AUDIO_DIR.glob("*.mp3"))
+    (AUDIO_DIR / "lijst.json").write_text(json.dumps(names, indent=0) + "\n")
 
 
 if __name__ == "__main__":
