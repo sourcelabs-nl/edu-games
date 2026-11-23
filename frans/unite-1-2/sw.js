@@ -1,6 +1,6 @@
 // Service worker: eerst het netwerk (altijd de nieuwste versie), offline uit de cache.
 // Bij installatie worden ook alle MP3's uit audio/lijst.json opgeslagen, zodat de hele toets offline werkt.
-const CACHE = 'frans-unite-1-2-v1';
+const CACHE = 'frans-unite-1-2-v2';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon-180.png'];
 
 self.addEventListener('install', e => {
